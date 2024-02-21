@@ -1,4 +1,4 @@
-// reducers/playerReducer.js
+// reducers/rootReducer.js
 
 import {
     FETCH_PLAYERS_REQUEST,
