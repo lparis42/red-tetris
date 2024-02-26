@@ -5,7 +5,6 @@ import { Provider } from 'react-redux';
 import './App.css';
 import store from '../store/store';
 
-import Tetris from './tetrisManager.js'
 import { useKeyboardEvents, SocketInstance, LobbyManager } from './socketManager';
 
 
@@ -13,7 +12,7 @@ function App() {
     
     // Gérer les événements clavier pour les actions du joueur
     useKeyboardEvents();
-
+    
     return (
         <Provider store={store}>
             <div className="App">

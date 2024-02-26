@@ -3,17 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import socketIOClient from 'socket.io-client';
 
+import { Tetris } from './tetrisManager.js'
+
 const socket = socketIOClient("http://localhost:1337");
 
 export const useKeyboardEvents = () => {
     useEffect(() => {
         const handlePlayerAction = (actionType) => {
-            const userData = {
-                id: socket.id,
-                type: actionType
-            };
-            console.log(userData.id, userData.type);
-            socket.emit('userAction', userData);
+            console.log(socket.id, actionType);
+            socket.emit('userAction', actionType);
         };
 
         const handleKeyDown = (event) => {
@@ -74,53 +72,52 @@ export const LobbyManager = () => {
     const [lobbyId, setLobbyId] = useState('');
     const [playerList, setPlayerList] = useState([]);
     const [isHost, setIsHost] = useState(false);
+    const [isGameStart, setIsGameStart] = useState(false);
 
     useEffect(() => {
-        // All clients
+        socket.on('serverError', (error) => {
+            console.error(`Error : ${error}`);
+        });
         socket.on('lobbyUpdate', (lobby) => {
             setPlayerList(lobby.players);
-            console.log("Lobby updated list of players: ", lobby.players);
-        });       
-
+            console.log(`Lobby updated list of players: ${lobby.players}`);
+        });
         socket.on('lobbyJoined', (lobbyId) => {
             setLobbyId(lobbyId);
-            console.log("Lobby joined with ID:", lobbyId);
+            console.log(`Lobby joined with ID: ${lobbyId}`);
         });
-
-        socket.on('lobbyNotFound', (lobbyId) => {
-            console.log("Lobby not found with ID:", lobbyId);
-        });
-        
-        socket.on('lobbyFull', (lobbyId) => {
-            console.log("Lobby is full with ID:", lobbyId);
-        });        
-        
         socket.on('lobbyLeft', (lobbyId) => {
             if (isHost) {
-                console.log("Lobby deleted with ID:", lobbyId);
+                console.log(`Lobby deleted with ID: ${lobbyId}`);
                 setIsHost(false);
             } else {
-                console.log("Lobby left with ID:", lobbyId);
+                console.log(`Lobby left with ID: ${lobbyId}`);
             }
             setLobbyId('');
             setPlayerList([]);
         });
-        
         socket.on('lobbyCreated', (lobby) => {
             setLobbyId(lobby.id);
             setIsHost(true);
             setPlayerList(lobby.players);
-            console.log("Lobby created with ID:", lobby.id);
-        });      
-
+            console.log(`Lobby created with ID: ${lobby.id}`);
+        });
+        socket.on('lobbyGameEnd', () => {
+            setIsGameStart(false);
+        });
+        socket.on('lobbyGameStart', () => {
+            setIsGameStart(true);
+        });
         return () => {
+            socket.off('serverError');
             socket.off('lobbyUpdate');
             socket.off('lobbyJoined');
             socket.off('lobbyLeft');
             socket.off('lobbyCreated');
+            socket.off('lobbyGameEnd');
+            socket.off('lobbyGameStart');
         };
-    }, [isHost, lobbyId, playerList]);
-
+    }, []);
 
     const createLobby = () => {
         socket.emit('createLobby');
@@ -141,34 +138,34 @@ export const LobbyManager = () => {
     const kickPlayer = (playerId) => {
         socket.emit('kickPlayer', lobbyId, playerId);
     };
-
     return (
         <div>
             <h1>Tetris Lobby</h1>
-            {lobbyId ? (
-                <button onClick={leaveLobby}>Leave Lobby</button>
-            ) : (
-                <div>
-                    <button onClick={createLobby}>Create Lobby</button>
-                    <button onClick={joinLobby}>Join Lobby</button>
-                </div>
-            )}
-            {isHost && lobbyId && (
-                <button onClick={startGame}>Start Game</button>
-            )}
-            {lobbyId && (
-                <div>
-                    <h2>Player List:</h2>
-                    <ul>
-                        {playerList && playerList.map((playerId) => (
-                            <li key={playerId}>
-                                {playerId}
-                                <button onClick={() => kickPlayer(playerId)}>Kick</button>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
+            <Tetris socket={socket} />
+            {!isGameStart ? (
+                lobbyId ? (
+                    <div>
+                        <button onClick={leaveLobby}>Leave Lobby</button>
+                        {isHost && <button onClick={startGame}>Start Game</button>}
+                        <div>
+                            <h2>Player List:</h2>
+                            <ul>
+                                {playerList && playerList.map((playerId) => (
+                                    <li key={playerId}>
+                                        {playerId}
+                                        {isHost && <button onClick={() => kickPlayer(playerId)}>Kick</button>}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                ) : (
+                    <div>
+                        <button onClick={createLobby}>Create Lobby</button>
+                        <button onClick={joinLobby}>Join Lobby</button>
+                    </div>
+                )
+            ) : null}
         </div>
     );
 };
