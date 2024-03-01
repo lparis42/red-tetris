@@ -68,8 +68,8 @@ export const SocketInstance = () => {
     );
 };
 
-export const LobbyManager = () => {
-    const [lobbyId, setLobbyId] = useState('');
+export const RoomManager = () => {
+    const [roomId, setRoomId] = useState('');
     const [playerList, setPlayerList] = useState([]);
     const [isHost, setIsHost] = useState(false);
     const [isGameStart, setIsGameStart] = useState(false);
@@ -78,74 +78,74 @@ export const LobbyManager = () => {
         socket.on('serverError', (error) => {
             console.error(`Error : ${error}`);
         });
-        socket.on('lobbyUpdate', (lobby) => {
-            setPlayerList(lobby.players);
-            console.log(`Lobby updated list of players: ${lobby.players}`);
+        socket.on('roomUpdate', (room) => {
+            setPlayerList(room.players);
+            console.log(`Room updated list of players: ${room.players}`);
         });
-        socket.on('lobbyJoined', (lobbyId) => {
-            setLobbyId(lobbyId);
-            console.log(`Lobby joined with ID: ${lobbyId}`);
+        socket.on('roomJoined', (roomId) => {
+            setRoomId(roomId);
+            console.log(`Room joined with ID: ${roomId}`);
         });
-        socket.on('lobbyLeft', (lobbyId) => {
+        socket.on('roomLeft', (roomId) => {
             if (isHost) {
-                console.log(`Lobby deleted with ID: ${lobbyId}`);
+                console.log(`Room deleted with ID: ${roomId}`);
                 setIsHost(false);
             } else {
-                console.log(`Lobby left with ID: ${lobbyId}`);
+                console.log(`Room left with ID: ${roomId}`);
             }
-            setLobbyId('');
+            setRoomId('');
             setPlayerList([]);
         });
-        socket.on('lobbyCreated', (lobby) => {
-            setLobbyId(lobby.id);
+        socket.on('roomCreated', (room) => {
+            setRoomId(room.id);
             setIsHost(true);
-            setPlayerList(lobby.players);
-            console.log(`Lobby created with ID: ${lobby.id}`);
+            setPlayerList(room.players);
+            console.log(`Room created with ID: ${room.id}`);
         });
-        socket.on('lobbyGameEnd', () => {
+        socket.on('roomGameEnd', () => {
             setIsGameStart(false);
         });
-        socket.on('lobbyGameStart', () => {
+        socket.on('roomGameStart', () => {
             setIsGameStart(true);
         });
         return () => {
             socket.off('serverError');
-            socket.off('lobbyUpdate');
-            socket.off('lobbyJoined');
-            socket.off('lobbyLeft');
-            socket.off('lobbyCreated');
-            socket.off('lobbyGameEnd');
-            socket.off('lobbyGameStart');
+            socket.off('roomUpdate');
+            socket.off('roomJoined');
+            socket.off('roomLeft');
+            socket.off('roomCreated');
+            socket.off('roomGameEnd');
+            socket.off('roomGameStart');
         };
     }, []);
 
-    const createLobby = () => {
-        socket.emit('createLobby');
+    const createRoom = () => {
+        socket.emit('createRoom');
     };
-    const joinLobby = () => {
-        const input = prompt('Enter lobby ID:');
+    const joinRoom = () => {
+        const input = prompt('Enter room ID:');
         if (input) {
-            socket.emit('joinLobby', input);
+            socket.emit('joinRoom', input);
         }
     };
-    const leaveLobby = () => {
-        socket.emit('leaveLobby', lobbyId);
-        setLobbyId('');
+    const leaveRoom = () => {
+        socket.emit('leaveRoom');
+        setRoomId('');
     };
     const startGame = () => {
-        socket.emit('startGame', lobbyId);
+        socket.emit('startGame');
     };
     const kickPlayer = (playerId) => {
-        socket.emit('kickPlayer', lobbyId, playerId);
+        socket.emit('kickPlayer', playerId);
     };
     return (
         <div>
-            <h1>Tetris Lobby</h1>
+            <h1>Tetris Room</h1>
             <Tetris socket={socket} />
             {!isGameStart ? (
-                lobbyId ? (
+                roomId ? (
                     <div>
-                        <button onClick={leaveLobby}>Leave Lobby</button>
+                        <button onClick={leaveRoom}>Leave Room</button>
                         {isHost && <button onClick={startGame}>Start Game</button>}
                         <div>
                             <h2>Player List:</h2>
@@ -161,8 +161,8 @@ export const LobbyManager = () => {
                     </div>
                 ) : (
                     <div>
-                        <button onClick={createLobby}>Create Lobby</button>
-                        <button onClick={joinLobby}>Join Lobby</button>
+                        <button onClick={createRoom}>Create Room</button>
+                        <button onClick={joinRoom}>Join Room</button>
                     </div>
                 )
             ) : null}

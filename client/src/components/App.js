@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import './App.css';
 import store from '../store/store';
 
-import { useKeyboardEvents, SocketInstance, LobbyManager } from './socketManager';
+import { useKeyboardEvents, SocketInstance, RoomManager } from './socketManager';
 
 
 function App() {
@@ -18,7 +18,7 @@ function App() {
             <div className="App">
                 <header className="App-header">
                 <SocketInstance />
-                <LobbyManager />
+                <RoomManager />
                 </header>
             </div>
         </Provider >

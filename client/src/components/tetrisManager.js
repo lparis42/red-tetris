@@ -14,30 +14,30 @@ export const Tetris = ({ socket }) => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('lobbyGameEnd', () => {
+    socket.on('roomGameEnd', () => {
       setIsGameStart(false);
       setGrids({
         player1: Array.from({ length: ROWS }, () => Array(COLS).fill(0)),
         player2: Array.from({ length: ROWS }, () => Array(COLS).fill(0))
       });
-      console.log(`Lobby game end`);
+      console.log(`Room game end`);
       return;
     });
 
-    socket.on('lobbyGameUpdate', ({ gridPlayer1, gridPlayer2 }) => {
+    socket.on('roomGameUpdate', ({ gridPlayer1, gridPlayer2 }) => {
       setGrids({ player1: gridPlayer1, player2: gridPlayer2 });
-      console.log(`Lobby game update`);
+      console.log(`Room game update`);
     });
 
-    socket.on('lobbyGameStart', () => {
+    socket.on('roomGameStart', () => {
       setIsGameStart(true);
-      console.log(`Lobby game start`);
+      console.log(`Room game start`);
     });
 
     return () => {
-      socket.off('lobbyGameEnd');
-      socket.off('lobbyGameUpdate');
-      socket.off('lobbyGameStart');
+      socket.off('roomGameEnd');
+      socket.off('roomGameUpdate');
+      socket.off('roomGameStart');
     };
   }, []);
 
@@ -74,7 +74,7 @@ const PlayerGrid = ({ grid }) => (
             style={{
               width: CELL_SIZE,
               height: CELL_SIZE,
-              backgroundColor: pieceColors[cell] || 'white',
+              backgroundColor: pieceColors[cell] || 'black',
               border: '1px solid black',
               boxSizing: 'border-box'
             }}

@@ -1,9 +1,11 @@
+// app.js
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 
-const { handleCreateLobby, handleJoinLobby, handleLeaveLobby, handleStartGame, handleUserAction, handleKickPlayer, handleDisconnect } = require('./lobbySocketHandlers');
+const { ROWS, COLS, players } = require('./globals'); // Utiliser la même instance de `players`
+const { handleCreateRoom, handleJoinRoom, handleLeaveRoom, handleStartGame, handleUserAction, handleKickPlayer, handleDisconnect } = require('./roomSocketHandlers');
 
 const PORT = process.env.PORT || 1337;
 
@@ -23,15 +25,12 @@ app.use((req, res, next) => {
     next();
 });
 
-const ROWS = 20;
-const COLS = 10;
+app.use(express.static(path.join(__dirname, '..', 'client', 'build')));
 
-let players = [];
-
-const initializePlayerData = (socketId) => {
+const getPlayerObject = (socketId) => {
     return {
         id: socketId,
-        lobbyId: null,
+        roomId: null,
         grid: Array.from({ length: ROWS }, () => Array(COLS).fill(0)),
         currentPiece: [],
         currentPosition: { row: 0, col: 0 },
@@ -51,24 +50,27 @@ const initializePlayerData = (socketId) => {
     };
 };
 
-const lobbies = {};
-
-app.use(express.static(path.join(__dirname, '..', 'client', 'build')));
-
 io.on('connection', (socket) => {
     console.log(`${socket.id} connected`);
-    players.push(initializePlayerData(socket.id));
+    players.push(getPlayerObject(socket.id));
+    console.log("Taille de players après ajout :", players.length);
 
-    handleCreateLobby(socket, lobbies, players);
-    handleJoinLobby(socket, lobbies, players, io);
-    handleLeaveLobby(socket, lobbies, players, io);
-    handleStartGame(socket, lobbies, players, io);
-    handleUserAction(socket, lobbies, players, io);
-    handleKickPlayer(socket, lobbies, players, io);
+    handleCreateRoom(socket);
+    handleJoinRoom(socket, io);
+    handleLeaveRoom(socket, io);
+    handleStartGame(socket, io);
+    handleUserAction(socket, io);
+    handleKickPlayer(socket, io);
 
     socket.on('disconnect', () => {
-        handleDisconnect(socket, lobbies, players, io);
-        players = players.filter(p => p.id !== socket.id);
+        handleDisconnect(socket, io);
+
+        // Ne réassignez pas la variable `players` ici
+        players.splice(players.findIndex(player => player.id === socket.id), 1);
+        
+        
+        console.log("Taille de players après filtrage :", players.length);
+
         console.log(`${socket.id} disconnected`);
     });
 });

@@ -1,51 +1,14 @@
-const ROWS = 20;
-const COLS = 10;
-
-const tetrisPieces = {
-    O: [
-        [1, 1],
-        [1, 1]
-    ],
-    I: [
-        [1],
-        [1],
-        [1],
-        [1]
-    ],
-    L: [
-        [1, 0],
-        [1, 0],
-        [1, 1]
-    ],
-    J: [
-        [0, 1],
-        [0, 1],
-        [1, 1]
-    ],
-    T: [
-        [1, 1, 1],
-        [0, 1, 0]
-    ],
-    Z: [
-        [1, 1, 0],
-        [0, 1, 1]
-    ],
-    S: [
-        [0, 1, 1],
-        [1, 1, 0]
-    ]
-};
-
+const { ROWS, COLS, players, rooms, tetrisPieces } = require('./globals');
+// Fonction pour générer une pièce aléatoire
 const getRandomPiece = () => {
     const pieces = Object.values(tetrisPieces);
     const randomIndex = Math.floor(Math.random() * pieces.length);
     return { color: randomIndex + 1, shape: pieces[randomIndex] };
 }
 
-
 // Fonction pour générer une position aléatoire en haut du tableau
-const getRandomStartPosition = (lenght) => {
-    const col = Math.floor(Math.random() * (COLS - lenght + 1));
+const getRandomStartPosition = (length) => {
+    const col = Math.floor(Math.random() * (COLS - length + 1));
     return { row: 0, col };
 };
 
@@ -73,6 +36,33 @@ const canMove = (currentPiece, currentPosition, grid) => {
     return true;
 };
 
+// Fonction pour vérifier et supprimer les lignes complètes
+const checkAndRemoveCompletedLines = (grid) => {
+    let completedLinesExist = true;
+
+    while (completedLinesExist) {
+        completedLinesExist = false;
+
+        for (let row = 0; row < grid.length; row++) {
+            let isCompleted = true;
+            for (let col = 0; col < grid[row].length; col++) {
+                if (grid[row][col] === 0) {
+                    isCompleted = false;
+                    break;
+                }
+            }
+            if (isCompleted) {
+                completedLinesExist = true;
+                grid.splice(row, 1);
+                grid.unshift(Array(COLS).fill(0));
+                break;
+            }
+        }
+    }
+};
+
+
+
 // Fonction pour mettre à jour la grille en fonction de la pièce actuelle
 const updateGrid = (grid, piece, position, color) => {
     const { row, col } = position;
@@ -86,7 +76,6 @@ const updateGrid = (grid, piece, position, color) => {
     });
 }
 
-
 // Fonction pour générer un identifiant de room aléatoire
 const generateRandomId = (length = 6) => {
     const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -98,35 +87,49 @@ const generateRandomId = (length = 6) => {
 };
 
 // Fonction pour fermer un room
-const closeRoom = (roomId, players, io) => {
-    if (io.sockets.adapter.rooms[roomId]) {
-
-        // Obtenir les IDs des sockets dans le room
-        const socketIds = io.sockets.adapter.rooms[roomId].sockets;
-
-        // Déconnecter les joueurs du room
-        socketIds.forEach(socketId => {
-            const socket = io.sockets.sockets.get(socketId);
-            socket.leave(roomId);
-            players.find(player => player.id === socket.id).roomId = null;
-        });
-
-        delete rooms[roomId];
+const closeRoom = (roomId, io) => {
+    const room = rooms[roomId];
+    if (!room) {
+        console.error(`Room ${roomId} does not exist.`);
+        return;
     }
+
+    room.players.forEach(playerId => {
+        const player = players.find(player => player.id === playerId);
+        if (!player) {
+            console.error(`Player ${playerId} not found.`);
+            return;
+        }
+
+        const playerSocket = io.sockets.sockets.get(playerId);
+        if (!playerSocket) {
+            console.error(`Socket for player ${playerId} not found.`);
+            return;
+        }
+
+        playerSocket.leave(roomId);
+        player.roomId = null;
+    });
+
+    delete rooms[roomId];
+    console.log(`Room ${roomId} closed.`);
 };
 
 // Fonction pour gérer la création de room
-const handleCreateRoom = (socket, rooms, players, io) => {
+const handleCreateRoom = (socket) => {
     socket.on('createRoom', () => {
-        // Vérifier si le joueur n'est pas déjà dans un room
-        if (players.find(player => player.id === socket.id)?.roomId) {
+        if (!socket) {
+            console.error("Socket is not valid");
+            return;
+        }
+
+        if (players.find(player => player.id === socket.id)?.roomId !== null) {
             const error = 'You are already in a room';
             socket.emit("serverError", error);
             console.error(`${socket.id} : ${error}`);
             return;
         }
 
-        // Générer un ID de room aléatoire
         let roomId;
         do {
             roomId = generateRandomId();
@@ -144,17 +147,20 @@ const handleCreateRoom = (socket, rooms, players, io) => {
 };
 
 // Fonction pour gérer la jointure de room
-const handleJoinRoom = (socket, rooms, players, io) => {
+const handleJoinRoom = (socket, io) => {
     socket.on('joinRoom', (roomId) => {
-        // Vérifier si le joueur n'est pas déjà dans un room
-        if (players.find(player => player.id === socket.id)?.roomId) {
+        if (!socket || !roomId) {
+            console.error("Socket or roomId is not valid");
+            return;
+        }
+
+        if (players.find(player => player.id === socket.id)?.roomId !== null) {
             const error = 'You are already in a room';
             socket.emit("serverError", error);
             console.error(`${socket.id} : ${error}`);
             return;
         }
 
-        // Vérifier si le room existe
         const room = rooms[roomId];
         if (!room) {
             const error = `Room not found with ID: ${roomId}`;
@@ -163,7 +169,6 @@ const handleJoinRoom = (socket, rooms, players, io) => {
             return;
         }
 
-        // Vérifier si le room est plein
         if (room.players.length >= 2) {
             const error = `Room is full with ID: ${roomId}`;
             socket.emit("serverError", error);
@@ -183,14 +188,14 @@ const handleJoinRoom = (socket, rooms, players, io) => {
 };
 
 // Fonction pour gérer le départ de room
-const handleLeaveRoom = (socket, rooms, players, io) => {
+const handleLeaveRoom = (socket, io) => {
     socket.on('leaveRoom', () => {
-        // Vérifier si le joueur est dans un room et si le room existe
         const player = players.find(player => player.id === socket.id);
         if (!player || !player.roomId || !rooms[player.roomId]) {
             const error = `You are not in any room or room does not exist`;
             socket.emit("serverError", error);
             console.log(`${socket.id} : ${error}`);
+            console.error(error);
             return;
         }
 
@@ -200,13 +205,11 @@ const handleLeaveRoom = (socket, rooms, players, io) => {
         const index = roomPlayers.indexOf(socket.id);
 
         if (index !== -1) {
-            // Gérer le cas où le joueur est l'hôte du room
             if (socket.id === host) {
                 io.to(roomId).emit('roomLeft', roomId);
-                closeRoom(roomId, players, io);
+                closeRoom(roomId, io);
                 console.log(`Host (${socket.id}) left and closed room ${roomId}`);
             } else {
-                // Gérer le cas où le joueur n'est pas l'hôte du room
                 socket.leave(roomId);
                 roomPlayers.splice(index, 1);
                 io.to(roomId).emit('roomUpdate', room);
@@ -218,87 +221,118 @@ const handleLeaveRoom = (socket, rooms, players, io) => {
             const error = `You are not in room ${roomId}`;
             socket.emit("serverError", error);
             console.log(`${socket.id} : ${error}`);
+            console.error(error);
         }
     });
 };
-
 // Fonction pour gérer le démarrage du jeu dans un room
-const handleStartGame = (socket, rooms, players, io) => {
-    socket.on('startGame', (roomId) => {
-        // Vérifier si le room existe
-        const room = rooms[roomId];
-        if (!room) {
-            const error = `Room ${roomId} does not exist`;
+const handleStartGame = (socket, io) => {
+    socket.on('startGame', () => {
+        const player = players.find(player => player.id === socket.id);
+
+        if (!player || !player.roomId || !rooms[player.roomId]) {
+            const error = `Invalid player or room`;
             socket.emit("serverError", error);
-            console.log(`${socket.id} : ${error}`);
+            console.error(`${socket.id} : ${error}`);
             return;
         }
 
-        // Vérifier si le joueur est l'hôte du room
-        if (room.host !== socket.id) {
-            const error = `You are not the host of room ${roomId}`;
+        const room = rooms[player.roomId];
+        if (room.players.length !== 2 || room.host !== socket.id) {
+            const error = `Invalid conditions for starting game in room ${player.roomId}`;
             socket.emit("serverError", error);
-            console.log(`${socket.id} : ${error}`);
+            console.error(`${socket.id} : ${error}`);
             return;
         }
 
-        const updateItervalFall = (player, players, room, io) => {
+        // Fonction pour gérer la descente automatique des pièces
+        const updateIntervalFall = (player, io) => {
+            if (!player.isGameStart) {
+                player.resetInterval.clear();
+                player.currentPiece = [];
+                player.currentPosition = { row: 0, col: 0 };
+                player.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+                return;
+            }
+
+            // Déplacer la pièce vers le bas d'une case
             updateGrid(player.grid, player.currentPiece.shape, player.currentPosition, 0);
-
             player.currentPosition.row += 1;
-            console.log("Position :", player.currentPosition);
+
             // Vérifier si la pièce peut descendre d'une case
             if (!canMove(player.currentPiece.shape, player.currentPosition, player.grid)) {
+                // Annuler le déplacement vers le bas de la pièce
                 player.currentPosition.row -= 1;
                 updateGrid(player.grid, player.currentPiece.shape, player.currentPosition, player.currentPiece.color);
 
+                if (player.currentPosition.row > 0) {
+                    checkAndRemoveCompletedLines(player.grid);
+                }
+
+                // Démarrer une nouvelle pièce
                 player.currentPiece = getRandomPiece();
                 player.currentPosition = getRandomStartPosition(player.currentPiece.shape[0].length);
-
-                player.resetInterval.clear();
-                player.resetInterval.set(() => updateItervalFall(player, players, room, io), 1000);
-            } else {
-                updateGrid(player.grid, player.currentPiece.shape, player.currentPosition, player.currentPiece.color);
-
-                const [playerA, playerB] = room.players.map(playerId => players.find(p => p.id === playerId));
-
-                io.to(player.roomId).emit('roomGameUpdate', {
-                    gridPlayer1: playerA.grid,
-                    gridPlayer2: playerB.grid,
-                });
+                if (!canMove(player.currentPiece.shape, player.currentPosition, player.grid)) {
+                    io.to(player.roomId).emit('roomGameEnd');
+                    players.forEach(player => {
+                        player.isGameStart = false;
+                    });
+                }
+                else {
+                    player.resetInterval.clear();
+                    player.resetInterval.set(() => updateIntervalFall(player, io), 1000);
+                }
             }
+
+            // Ajouter la pièce à la grille
+            updateGrid(player.grid, player.currentPiece.shape, player.currentPosition, player.currentPiece.color);
+
+            // Transmettre les grilles des joueurs aux clients
+            const [playerA, playerB] = players.map(player => player.id === player.id ? player : null);
+            io.to(player.roomId).emit('roomGameUpdate', {
+                gridPlayer1: playerA ? playerA.grid : [],
+                gridPlayer2: playerB ? playerB.grid : [],
+            });
         };
 
         players.forEach(player => {
+            player.isGameStart = true;
             player.currentPiece = getRandomPiece();
             player.currentPosition = getRandomStartPosition(player.currentPiece.shape[0].length);
             updateGrid(player.grid, player.currentPiece.shape, player.currentPosition, player.currentPiece.color);
 
             player.resetInterval.set(() => {
-                updateItervalFall(player, players, room, io);
+                updateIntervalFall(player, io);
             }, 1000);
         });
 
-        io.to(roomId).emit('roomGameStart');
+        io.to(player.roomId).emit('roomGameStart');
+        const [playerA, playerB] = room.players.map(playerId => players.find(player => player.id === playerId));
 
-        console.log(`Game started in room ${roomId}`);
+        io.to(player.roomId).emit('roomGameUpdate', {
+            gridPlayer1: playerA.grid,
+            gridPlayer2: playerB.grid,
+        });
+
+        console.log(`Game started in room ${player.roomId}`);
     });
 };
 
 // Fonction pour gérer l'action d'un joueur
-const handleUserAction = (socket, rooms, players, io) => {
+const handleUserAction = (socket, io) => {
     socket.on('userAction', (action) => {
-
         const player = players.find(player => player.id === socket.id && player.roomId);
         const room = player && rooms[player.roomId];
 
-        // Vérifier si le joueur et le room existent et si le joueur est dans ce room
-        if (!player || !room || !room.players.includes(player.id)) return;
+        if (!player || !room || !room.players.includes(player.id) || player.isGameStart === false) {
+            const error = `Invalid action received from user ${socket.id}`;
+            socket.emit("serverError", error);
+            console.error(`${socket.id} : ${error}`);
+            return;
+        }
 
-        // Afficher l'action du joueur
         console.log(`Received action from user ${socket.id}: ${action}`);
 
-        // Logique pour faire pivoter une pièce vers la gauche
         const rotatePieceLeft = (piece) => {
             const rotatedPiece = [];
             const rows = piece.length;
@@ -315,7 +349,6 @@ const handleUserAction = (socket, rooms, players, io) => {
             return rotatedPiece;
         };
 
-        // Logique pour faire pivoter une pièce vers la droite
         const rotatePieceRight = (piece) => {
             const rotatedPiece = [];
             const rows = piece.length;
@@ -334,7 +367,6 @@ const handleUserAction = (socket, rooms, players, io) => {
 
         updateGrid(player.grid, player.currentPiece.shape, player.currentPosition, 0);
 
-        // Mettre à jour la position et la forme de la pièce en fonction de l'action
         switch (action) {
             case 'move-left':
                 player.currentPosition.col -= 1;
@@ -372,90 +404,87 @@ const handleUserAction = (socket, rooms, players, io) => {
 
         updateGrid(player.grid, player.currentPiece.shape, player.currentPosition, player.currentPiece.color);
 
-        const [playerA, playerB] = room.players.map(playerId => players.find(p => p.id === playerId));
+        const [playerA, playerB] = room.players.map(playerId => players.find(player => player.id === playerId));
         io.to(player.roomId).emit('roomGameUpdate', {
             gridPlayer1: playerA.grid,
             gridPlayer2: playerB.grid,
         });
     });
 };
-
-
 // Fonction pour gérer l'expulsion d'un joueur d'un room
-const handleKickPlayer = (socket, rooms, players, io) => {
-    socket.on('kickPlayer', (roomId, playerId) => {
-        // Vérifier si le room existe
-        const room = rooms[roomId];
-        if (!room) {
-            const error = `Room ${roomId} does not exist`;
+const handleKickPlayer = (socket, io) => {
+    socket.on('kickPlayer', (playerId) => {
+        const player = players.find(player => player.id === socket.id);
+
+        if (!player || !player.roomId || !rooms[player.roomId] || !playerId) {
+            const error = `Invalid parameters for kicking player from room`;
             socket.emit("serverError", error);
-            console.log(`${socket.id} : ${error}`);
+            console.error(`${socket.id} : ${error}`);
             return;
         }
 
-        // Vérifier si le joueur qui fait l'action est l'hôte
-        if (socket.id !== room.host) {
-            const error = `You are not the host of room ${roomId}`;
+        const room = rooms[player.roomId];
+        if (!room || player.id !== room.host) {
+            const error = `You are not the host of room ${player.roomId}`;
             socket.emit("serverError", error);
-            console.log(`${socket.id} : ${error}`);
+            console.error(`${socket.id} : ${error}`);
             return;
         }
 
-        // Vérifier si le joueur à expulser est bien dans le room
-        const player = players.find(player => player.id === playerId);
-        if (!player) {
-            const error = `Player ${playerId} doesn't exist`;
+        const playerIndex = room.players.indexOf(playerId);
+        if (playerIndex === -1) {
+            const error = `Player ${playerId} is not in room ${player.roomId}`;
             socket.emit("serverError", error);
-            console.log(`${socket.id} : ${error}`);
+            console.error(`${socket.id} : ${error}`);
             return;
         }
 
-        // Vérifier si le joueur à expulser est bien dans le room
-        if (player.roomId !== roomId) {
-            const error = `Player ${playerId} is not in room ${roomId}`;
-            socket.emit("serverError", error);
-            console.log(`${socket.id} : ${error}`);
-            return;
+        if (playerId === room.host) {
+            io.to(player.roomId).emit('roomLeft', player.roomId);
+            closeRoom(player.roomId, io);
+            console.log(`Host (${playerId}) kicked himself. Room ${player.roomId} closed`);
+        } else {
+            const playerSocket = io.sockets.sockets.get(playerId);
+            if (!playerSocket) return;
+
+            playerSocket.leave(player.roomId);
+            playerSocket.emit('roomLeft', player.roomId);
+
+            room.players.splice(playerIndex, 1);
+            io.to(player.roomId).emit('roomUpdate', room);
+            players.find(player => player.id === playerId).roomId = null;
+            console.log(`${playerId} kicked from room ${player.roomId}`);
         }
-
-        const playerSocket = io.sockets.sockets.get(playerId);
-        playerSocket.leave(roomId);
-        players.find(p => p.id === playerId).roomId = null;
-        room.players = room.players.filter(p => p !== playerId);
-
-        io.to(roomId).emit('roomUpdate', room);
-        playerSocket.emit('roomLeft', roomId);
-
-        console.log(`${playerId} kicked from room ${roomId}`);
     });
 };
 
 // Fonction pour gérer la déconnexion d'un client
-const handleDisconnect = (socket, rooms, players, io) => {
-    // Récupérer le joueur déconnecté
-    const player = players.find(p => p.id === socket.id);
-    if (!player || !player.roomId) return;
+const handleDisconnect = (socket, io) => {
+    if (!socket) {
+        console.error("Socket is not valid");
+        return;
+    }
+
+    const player = players.find(player => player.id === socket.id);
+    if (!player || !player.roomId || !rooms[player.roomId]) return;
 
     const room = rooms[player.roomId];
     if (!room) return;
 
-    const { players: roomPlayers, host } = room;
+    const { players: roomPlayers } = room;
     const index = roomPlayers.indexOf(socket.id);
+    if (index === -1) return;
 
-    // Vérifier si le joueur déconnecté est dans la liste des joueurs du room
-    if (index !== -1) {
-        // Vérifier si le joueur déconnecté est l'hôte du room
-        if (socket.id === host) {
-            io.to(player.roomId).emit('roomLeft', player.roomId);
-            closeRoom(player.roomId, players, io);
-            console.log(`Host (${socket.id}) disconnected. Room ${player.roomId} closed`);
-        } else {
-            socket.leave(player.roomId);
-            roomPlayers.splice(index, 1);
-            io.to(player.roomId).emit('roomUpdate', room);
-            players.find(p => p.id === socket.id).roomId = null;
-            console.log(`${socket.id} left room ${player.roomId}`);
-        }
+    if (socket.id === room.host) {
+        io.to(player.roomId).emit('roomLeft', player.roomId);
+        closeRoom(player.roomId, io);
+        console.log(`Host (${socket.id}) disconnected. Room ${player.roomId} closed`);
+    } else {
+        socket.leave(player.roomId);
+        roomPlayers.splice(index, 1);
+        io.to(player.roomId).emit('roomUpdate', room);
+        player.roomId = null;
+        console.log(`${socket.id} left room ${player.roomId}`);
     }
 };
 
