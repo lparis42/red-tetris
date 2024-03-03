@@ -1,10 +1,6 @@
-const ROWS = 20;
-const COLS = 10;
+// Piece.js
 
-const players = [];
-const rooms = {};
-
-const tetrisPieces = {
+const shapes = {
     O: [
         [1, 1],
         [1, 1]
@@ -39,4 +35,14 @@ const tetrisPieces = {
     ]
 };
 
-module.exports = { ROWS, COLS, players, rooms, tetrisPieces };
+class Piece {
+    constructor() {
+        // Logique pour générer une pièce aléatoire
+        const pieces = Object.values(shapes);
+        const randomIndex = Math.floor(Math.random() * pieces.length);
+        this.shape = pieces[randomIndex];
+        this.color = randomIndex + 1;
+    }
+}
+
+module.exports = Piece;
