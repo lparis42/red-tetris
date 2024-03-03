@@ -69,26 +69,20 @@ class Player {
     }
 
     checkAndRemoveCompletedLines() {
-        // Logique pour vérifier et supprimer les lignes complètes
-        let completedLinesExist = true;
-
-        while (completedLinesExist) {
-            completedLinesExist = false;
-
-            for (let row = 0; row < this.grid.length; row++) {
-                let isCompleted = true;
-                for (let col = 0; col < this.grid[row].length; col++) {
-                    if (this.grid[row][col] === 0) {
-                        isCompleted = false;
-                        break;
-                    }
-                }
-                if (isCompleted) {
-                    completedLinesExist = true;
-                    this.grid.splice(row, 1);
-                    this.grid.unshift(Array(COLS).fill(0));
+        // Logique supprimer les lignes complètes
+        for (let row = 0; row < this.grid.length; row++) {
+            let isCompleted = true;
+            for (let col = 0; col < this.grid[row].length; col++) {
+                if (this.grid[row][col] === 0) {
+                    isCompleted = false;
                     break;
                 }
+            }
+            if (isCompleted) {
+                completedLinesExist = true;
+                this.grid.splice(row, 1);
+                this.grid.unshift(Array(COLS).fill(0));
+                break;
             }
         }
     }
