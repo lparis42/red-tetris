@@ -81,7 +81,6 @@ class Player {
             if (isCompleted) {
                 this.grid.splice(row, 1);
                 this.grid.unshift(Array(COLS).fill(0));
-                break;
             }
         }
     }
