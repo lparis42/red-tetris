@@ -4,6 +4,9 @@ const Room = require('./Room');
 const Piece = require('./Piece');
 const Position = require('./Position');
 
+const ROWS = 20;
+const COLS = 10;
+
 class GameManager {
     constructor(io) {
         this.io = io;
@@ -37,9 +40,16 @@ class GameManager {
             return;
         }
 
+        // Logique pour générer un identifiant de room aléatoire et unique
         let roomId;
         do {
-            roomId = this.generateRandomId();
+            const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            const length = 6;
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            roomId = result;
         } while (this.rooms[roomId]);
 
         socket.join(roomId);
@@ -71,13 +81,6 @@ class GameManager {
         const room = this.rooms[roomId];
         if (!room) {
             const error = `Room not found with ID: ${roomId}`;
-            socket.emit("serverError", error);
-            console.error(`${socket.id} : ${error}`);
-            return;
-        }
-
-        if (room.players.length >= 2) {
-            const error = `Room is full with ID: ${roomId}`;
             socket.emit("serverError", error);
             console.error(`${socket.id} : ${error}`);
             return;
@@ -137,120 +140,148 @@ class GameManager {
     }
 
 
+    // Fonction pour démarrer le jeu
     handleStartGame(socket) {
+        // Trouver le joueur associé au socket
         const player = this.players.find(player => player.id === socket.id);
 
+        // Vérifier si le joueur ou la salle est invalide
         if (!player || !player.roomId || !this.rooms[player.roomId]) {
-            const error = `Invalid player or room`;
+            const error = `Joueur ou salle invalide`;
             socket.emit("serverError", error);
             console.error(`${socket.id} : ${error}`);
             return;
         }
 
+        // Récupérer la salle
         const room = this.rooms[player.roomId];
-        if (room.players.length !== 2 || room.host !== socket.id) {
-            const error = `Invalid conditions for starting game in room ${player.roomId}`;
+
+        // Vérifier si le joueur est l'hôte de la salle
+        if (room.host !== socket.id) {
+            const error = `Joueur invalide pour démarrer le jeu dans la salle ${player.roomId}`;
             socket.emit("serverError", error);
             console.error(`${socket.id} : ${error}`);
             return;
         }
 
-        // Fonction pour gérer la descente automatique des pièces
-        const updateIntervalFall = (socket, player, room, level, timer) => {
-            if (!player.isGameStart) {
-                player.gameEnd();
-                return;
-            }
-            console.log(player.id);
-
-            // Déplacer la pièce vers le bas d'une case
+        // Fonction pour mettre à jour l'intervalle de chute des pièces
+        const updateIntervalFall = (playerSocket, player, room, level, timer) => {
+            // Retirer la pièce de la grille
             player.removePieceToGrid();
+            // Déplacer la pièce vers le bas
             player.currentPosition.row += 1;
 
-            // Vérifier si la pièce peut descendre d'une case
+            // Vérifier si la pièce peut bouger vers le bas
             if (!player.isPieceCanMove()) {
-                // Annuler le déplacement vers le bas de la pièce
+                // Annuler le déplacement vers le bas
                 player.currentPosition.row -= 1;
+                // Ajouter la pièce à la grille
                 player.addPieceToGrid();
 
-                if (player.currentPosition.row > 0) {
-                    player.checkAndRemoveCompletedLines();
-                }
-
-                // Démarrer une nouvelle pièce
-                player.currentPiece = new Piece();
-                player.currentPosition = new Position(player.currentPiece.shape[0].length);
-                if (!player.isPieceCanMove()) {
-                    this.io.to(player.roomId).emit('roomGameEnd');
-                    this.players.forEach(player => {
-                        player.isGameStart = false;
+                // Vérifier et supprimer les lignes complétées
+                const penalty = player.removeCompletedLines();
+                if (penalty > 1) {
+                    // Récupérer les grilles des joueurs dans la salle, en excluant le joueur actuel
+                    const playersInRoom = this.players.filter(otherPlayer => room.players.includes(otherPlayer.id) && otherPlayer.id !== player.id);
+                    // Appliquer les pénalités
+                    playersInRoom.forEach(otherPlayer => {
+                        otherPlayer.addPenalty(penalty - 1);
                     });
                 }
-                else {
-                    player.resetInterval.clear();
-                    level += 1;
-                    if (level >= 0 && level <= 9) {
-                        timer = 800;
-                    } else if (level >= 10 && level <= 19) {
-                        timer = 700;
-                    } else if (level >= 20 && level <= 29) {
-                        timer = 600;
-                    } else if (level >= 30 && level <= 39) {
-                        timer = 500;
-                    } else if (level >= 30 && level <= 39) {
-                        timer = 400;
-                    }
-                    player.resetInterval.set(() => {
-                        updateIntervalFall(socket, player, room, level, timer);
-                    }, timer);
+
+                // Vérifier si la première ligne est remplie
+                if (player.isGameEnd()) {
+                    // Émettre un événement de fin de partie
+                    playerSocket.emit('roomGameEnd');
+                    return;
                 }
+
+                // Augmenter le niveau
+                level += 1;
+                // Gérer le temps de chute en fonction du niveau
+                if (!room.pieces[level]) {
+                    const piece = new Piece();
+                    const position = new Position(piece.shape);
+                    room.addPiece(piece, position);
+                }
+                player.currentPiece = Object.create(room.pieces[level]);
+                player.currentPosition = Object.create(room.positions[level]);
+                if (level >= 0 && level <= 9) {
+                    timer = 800;
+                } else if (level >= 10 && level <= 19) {
+                    timer = 700;
+                } else if (level >= 20 && level <= 29) {
+                    timer = 600;
+                } else if (level >= 30 && level <= 39) {
+                    timer = 500;
+                } else if (level >= 40 && level <= 49) {
+                    timer = 400;
+                }
+                // Réinitialiser l'intervalle de chute
+                player.resetInterval.clear();
+                player.resetInterval.set(() => {
+                    // Mettre à jour l'intervalle de chute
+                    updateIntervalFall(playerSocket, player, room, level, timer);
+                }, timer);
             }
+
             // Ajouter la pièce à la grille
             player.addPieceToGrid();
 
-            // Transmettre les grilles des joueurs aux clients
-            const [playerA, playerB] = room.players.map(playerId => this.players.find(p => p.id === playerId));
-            if (!playerA || !playerB) {
-                const errorMessage = "One or both players are missing";
-                socket.emit("serverError", errorMessage);
-                console.error(errorMessage);
-            } else {
-                this.io.to(player.roomId).emit('roomGameUpdate', {
-                    gridPlayer1: playerA.grid,
-                    gridPlayer2: playerB.grid,
-                });
+            // Récupérer les joueurs dans la salle
+            const playersInRoom = this.players.filter(player => room.players.includes(player.id));
+            const gridsToUpdate = [];
+            gridsToUpdate.unshift(player.grid);
+            for (let i = 0; i < playersInRoom.length; i++) {
+                if (playersInRoom[i] !== player) {
+                    gridsToUpdate.push(playersInRoom[i].calculateSpectrum());
+                }
             }
-
+            // Émettre un événement de mise à jour de la salle
+            playerSocket.emit('roomGameUpdate', gridsToUpdate);
         };
 
-        this.players.forEach(player => {
+        // Créer une nouvelle pièce et position pour la salle
+        const piece = new Piece();
+        const position = new Position(piece.shape);
+        room.addPiece(piece, position);
+
+        // Récupérer les joueurs dans la salle
+        const roomPlayers = this.players.filter(player => room.players.includes(player.id));
+        // Démarrer le jeu pour chaque joueur dans la salle
+        roomPlayers.forEach(player => {
             player.isGameStart = true;
-            player.currentPiece = new Piece();
-            player.currentPosition = new Position(player.currentPiece.shape[0].length);
+            player.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+            player.currentPiece = Object.create(room.pieces[0]);
+            player.currentPosition = Object.create(room.positions[0]);
             player.addPieceToGrid();
 
+            // Définir l'intervalle de chute pour chaque joueur
             player.resetInterval.set(() => {
                 const playerSocket = this.io.sockets.sockets.get(player.id);
                 updateIntervalFall(playerSocket, player, room, 0, 800);
             }, 800);
-            
         });
 
-        const [playerA, playerB] = room.players.map(playerId => this.players.find(p => p.id === playerId));
-        if (!playerA || !playerB) {
-            const errorMessage = "One or both players are missing";
-            this.io.to(player.roomId).emit("serverError", errorMessage);
-            console.error(errorMessage);
-        } else {
-            this.io.to(player.roomId).emit('roomGameStart');
-            this.io.to(player.roomId).emit('roomGameUpdate', {
-                gridPlayer1: playerA.grid,
-                gridPlayer2: playerB.grid,
-            });
+        // Récupérer les joueurs dans la salle
+        const playersInRoom = this.players.filter(player => room.players.includes(player.id));
+        const gridsToUpdate = [];
+        gridsToUpdate.unshift(player.grid);
+        for (let i = 0; i < playersInRoom.length; i++) {
+            if (playersInRoom[i] !== player) {
+                gridsToUpdate.push(playersInRoom[i].calculateSpectrum());
+            }
         }
+        // Émettre un événement de mise à jour de la salle
+        socket.emit('roomGameUpdate', gridsToUpdate);
 
+        // Émettre un événement de démarrage de jeu pour la salle
+        this.io.to(player.roomId).emit('roomGameStart');
+
+        // Afficher un message dans la console pour indiquer que le jeu a démarré
         console.log(`Game started in room ${player.roomId}`);
     }
+
 
     handleUserAction(socket, action) {
         const player = this.players.find(player => player.id === socket.id && player.roomId);
@@ -284,82 +315,71 @@ class GameManager {
             return;
         }
 
-        const rotatePieceLeft = (piece) => {
-            const rotatedPiece = [];
-            const rows = piece.length;
-            const cols = piece[0].length;
-
-            for (let col = cols - 1; col >= 0; col--) {
-                const newRow = [];
-                for (let row = 0; row < rows; row++) {
-                    newRow.push(piece[row][col]);
-                }
-                rotatedPiece.push(newRow);
-            }
-
-            return rotatedPiece;
-        };
-
-        const rotatePieceRight = (piece) => {
-            const rotatedPiece = [];
-            const rows = piece.length;
-            const cols = piece[0].length;
-
-            for (let col = 0; col < cols; col++) {
-                const newRow = [];
-                for (let row = rows - 1; row >= 0; row--) {
-                    newRow.push(piece[row][col]);
-                }
-                rotatedPiece.push(newRow);
-            }
-
-            return rotatedPiece;
-        };
-
-        player.removePieceToGrid();
-
         switch (action) {
             case 'move-left':
+                player.removePieceToGrid();
                 player.currentPosition.col -= 1;
                 if (!player.isPieceCanMove()) {
                     player.currentPosition.col += 1;
                 }
+                player.addPieceToGrid();
                 break;
             case 'move-right':
+                player.removePieceToGrid();
                 player.currentPosition.col += 1;
                 if (!player.isPieceCanMove()) {
                     player.currentPosition.col -= 1;
                 }
+                player.addPieceToGrid();
                 break;
             case 'move-down':
+                player.removePieceToGrid();
                 player.currentPosition.row += 1;
                 if (!player.isPieceCanMove()) {
                     player.currentPosition.row -= 1;
                 }
+                player.addPieceToGrid();
                 break;
             case 'rotate-left':
-                player.currentPiece.shape = rotatePieceLeft(player.currentPiece.shape);
+                player.removePieceToGrid();
+                player.currentPiece.rotatePieceLeft();
                 if (!player.isPieceCanMove()) {
-                    player.currentPiece.shape = rotatePieceRight(player.currentPiece.shape);
+                    player.currentPiece.rotatePieceRight();
                 }
+                player.addPieceToGrid();
                 break;
             case 'rotate-right':
-                player.currentPiece.shape = rotatePieceRight(player.currentPiece.shape);
+                player.removePieceToGrid();
+                player.currentPiece.rotatePieceRight();
                 if (!player.isPieceCanMove()) {
-                    player.currentPiece.shape = rotatePieceLeft(player.currentPiece.shape);
+                    player.currentPiece.rotatePieceLeft();
                 }
+                player.addPieceToGrid();
+                break;
+            case 'move-space':
+                // Logique pour déplacer instantanément la pièce vers le bas
+                player.removePieceToGrid();
+                while (player.isPieceCanMove()) {
+                    player.currentPosition.row += 1;
+                }
+                player.currentPosition.row -= 1;
+                player.addPieceToGrid();
                 break;
             default:
                 break;
         }
 
-        player.addPieceToGrid();
-
-        const [playerA, playerB] = room.players.map(playerId => this.players.find(player => player.id === playerId));
-        this.io.to(player.roomId).emit('roomGameUpdate', {
-            gridPlayer1: playerA.grid,
-            gridPlayer2: playerB.grid,
-        });
+        // Récupérer les joueurs dans la salle
+        const playersInRoom = this.players.filter(player => room.players.includes(player.id));
+        const gridsToUpdate = [];
+        gridsToUpdate.unshift(player.grid);
+        for (let i = 0; i < playersInRoom.length; i++) {
+            if (playersInRoom[i] !== player) {
+                gridsToUpdate.push(playersInRoom[i].calculateSpectrum());
+            }
+        }
+        // Émettre un événement de mise à jour de la salle
+        socket.emit('roomGameUpdate', gridsToUpdate);
     }
 
     handleKickPlayer(socket, playerId) {
@@ -424,9 +444,10 @@ class GameManager {
                     // Si le joueur déconnecté est l'hôte de la salle
                     this.io.to(player.roomId).emit('roomLeft', player.roomId);
                     this.closeRoom(player.roomId);
-                    console.log(`Host (${socket.id}) disconnected`);
+                    console.log(`Host ${socket.id} left room ${player.roomId}`);
                 } else {
                     // Si le joueur déconnecté est un joueur normal
+                    player.resetInterval.clear();
                     socket.leave(player.roomId);
                     room.players = room.players.filter(p => p !== socket.id);
                     this.io.to(player.roomId).emit('roomUpdate', room);
@@ -441,16 +462,6 @@ class GameManager {
         console.log(`${socket.id} disconnected`);
     }
 
-    generateRandomId(length = 6) {
-        // Logique pour générer un identifiant de room aléatoire
-        const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-        let result = '';
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * characters.length));
-        }
-        return result;
-    }
-
     closeRoom(roomId) {
         // Logique pour fermer une room
         const room = this.rooms[roomId];
@@ -463,17 +474,18 @@ class GameManager {
             const player = this.players.find(player => player.id === playerId);
             if (!player) {
                 console.error(`Player ${playerId} not found.`);
-                return;
+            } else {
+                player.resetInterval.clear();
+                player.roomId = null;
             }
 
             const playerSocket = this.io.sockets.sockets.get(playerId);
             if (!playerSocket) {
                 console.error(`Socket for player ${playerId} not found.`);
-                return;
+            } else {
+                playerSocket.leave(roomId);
             }
 
-            playerSocket.leave(roomId);
-            player.roomId = null;
         });
 
         delete this.rooms[roomId];

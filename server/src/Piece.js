@@ -43,6 +43,40 @@ class Piece {
         this.shape = pieces[randomIndex];
         this.color = randomIndex + 1;
     }
+
+    
+    rotatePieceLeft() {
+        const rotatedPiece = [];
+        const rows = this.shape.length;
+        const cols = this.shape[0].length;
+    
+        for (let col = cols - 1; col >= 0; col--) {
+            const newRow = [];
+            for (let row = 0; row < rows; row++) {
+                newRow.push(this.shape[row][col]);
+            }
+            rotatedPiece.push(newRow);
+        }
+    
+        this.shape = rotatedPiece;
+    };
+    
+    rotatePieceRight() {
+        const rotatedPiece = [];
+        const rows = this.shape.length;
+        const cols = this.shape[0].length;
+    
+        for (let col = 0; col < cols; col++) {
+            const newRow = [];
+            for (let row = rows - 1; row >= 0; row--) {
+                newRow.push(this.shape[row][col]);
+            }
+            rotatedPiece.push(newRow);
+        }
+    
+        this.shape = rotatedPiece;
+    };
+    
 }
 
 module.exports = Piece;

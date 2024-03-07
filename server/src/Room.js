@@ -4,6 +4,8 @@ class Room {
     constructor(host) {
         this.host = host;
         this.players = [host];
+        this.pieces = [];
+        this.positions = [];
     }
 
     addPlayer(playerId) {
@@ -15,6 +17,11 @@ class Room {
         if (index !== -1) {
             this.players.splice(index, 1);
         }
+    }
+
+    addPiece(piece, position) {
+        this.pieces.push(piece);
+        this.positions.push(position);
     }
 }
 

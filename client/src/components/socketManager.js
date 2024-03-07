@@ -5,7 +5,8 @@ import socketIOClient from 'socket.io-client';
 
 import { Tetris } from './tetrisManager.js'
 
-const socket = socketIOClient("http://localhost:1337");
+//const socket = socketIOClient("http://red-tetris.ddns.net");
+const socket = socketIOClient("http://localhost:80");
 
 export const useKeyboardEvents = () => {
     useEffect(() => {
@@ -30,6 +31,9 @@ export const useKeyboardEvents = () => {
                     break;
                 case 'e':
                     handlePlayerAction('rotate-right');
+                    break;
+                case ' ':
+                    handlePlayerAction('move-space');
                     break;
                 default:
                     break;
