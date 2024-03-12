@@ -349,10 +349,10 @@ class GameManager {
                 },
                 content: player.grid
             };
-            socket.emit('tetris:room:game:update:grid', { playerGrid });
+            socket.emit('tetris:room:game:update:grid', playerGrid);
 
             const spectreToUpdate = player.calculateSpectrum();
-            socket.broadcast.to(player.roomId).emit('tetris:room:game:update:spectre', { spectreToUpdate });
+            socket.broadcast.to(player.roomId).emit('tetris:room:game:update:spectre', player.name, spectreToUpdate);
         };
 
         // Créer une nouvelle pièce et position pour la salle
@@ -389,10 +389,10 @@ class GameManager {
             },
             content: player.grid
         };
-        socket.emit('tetris:room:game:update:grid', { playerGrid });
+        socket.emit('tetris:room:game:update:grid', playerGrid);
 
         const spectreToUpdate = player.calculateSpectrum();
-        socket.broadcast.to(player.roomId).emit('tetris:room:game:update:spectre', { spectreToUpdate });
+        socket.broadcast.to(player.roomId).emit('tetris:room:game:update:spectre', player.name, spectreToUpdate);
 
         // Émettre un événement de démarrage de jeu pour la salle
         this.io.to(player.roomId).emit("tetris:room:game:start", null);
@@ -513,7 +513,7 @@ class GameManager {
             },
             content: player.grid
         };
-        socket.emit('tetris:room:game:update:grid', { playerGrid });
+        socket.emit('tetris:room:game:update:grid', playerGrid);
     }
 
     handlePlayerRename(socket, newName) {
