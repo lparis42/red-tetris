@@ -79,7 +79,7 @@ export const RoomManager = () => {
     const [isGameStart, setIsGameStart] = useState(false);
 
     useEffect(() => {
-        socket.on('serverError', (error) => {
+        socket.on('tetris:server:error', (error) => {
             console.error(`Error : ${error}`);
         });
         socket.on('roomUpdate', (room) => {
@@ -113,7 +113,7 @@ export const RoomManager = () => {
             setIsGameStart(true);
         });
         return () => {
-            socket.off('serverError');
+            socket.off('tetris:server:error');
             socket.off('roomUpdate');
             socket.off('roomJoined');
             socket.off('roomLeft');

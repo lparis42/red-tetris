@@ -6,10 +6,14 @@ const COLS = 10;
 class Player {
     constructor(id) {
         this.id = id;
+        this.name = id;
         this.roomId = null;
         this.grid = null;
         this.currentPiece = null;
         this.currentPosition = null;
+        this.nextPiece = null;
+        this.holdPiece = null;
+        this.penalty = 0;
         this.isGameStart = false;
         this.resetInterval = {
             interval: null,
@@ -50,10 +54,11 @@ class Player {
         return true;
     }
 
-    addPenalty(penalties) {
-        for (let j = 0; j < penalties; j++) {
+    addPenalty() {
+        while (this.penalty > 0) {
             this.grid.shift();
             this.grid.push(Array(10).fill(-1));
+            this.penalty--;
         }
     }
 

@@ -1,11 +1,12 @@
 // Room.js
 
 class Room {
-    constructor(host) {
+    constructor(host, mode) {
         this.host = host;
         this.players = [host];
         this.pieces = [];
         this.positions = [];
+        this.mode = mode;
     }
 
     addPlayer(playerId) {
