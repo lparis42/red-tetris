@@ -25,7 +25,7 @@ class GameManager {
             socket.on('tetris:room:leave', (cb) => this.handleRoomLeave(socket, cb));
             socket.on('tetris:room:game:start', (cb) => this.handleRoomGameStart(socket, cb));
             socket.on('tetris:room:game:action', (action, cb) => this.handleRoomGameAction(socket, action, cb));
-            socket.on('tetris:player:rename', ({ newName }, cb) => this.handlePlayerRename(socket, newName, cb));
+            socket.on('tetris:player:rename', (newName, cb) => this.handlePlayerRename(socket, newName, cb));
             socket.on('tetris:room:list', (roomId, cb) => this.handleRoomList(socket, roomId, cb));
             socket.on('tetris:room:kick', (playerId, cb) => this.handleRoomKick(socket, playerId, cb));
 
