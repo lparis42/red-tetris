@@ -65,7 +65,7 @@ class GameManager {
         player.roomId = roomId;
 
         socket.join(roomId);
-        socket.emit('tetris:room:create', roomId, null);
+        cb(roomId, null);
 
         console.log(`${socket.id} created room ${roomId}`);
     }
@@ -93,7 +93,7 @@ class GameManager {
         player.roomId = roomId;
 
         socket.join(roomId);
-        socket.emit("tetris:room:join", roomId, null);
+        cb(roomId, null);
 
         const playerNames = room.players.map(playerId => this.players.find(p => p.id === playerId).name);
         this.io.to(roomId).emit('tetris:room:update', playerNames);
@@ -145,7 +145,7 @@ class GameManager {
             room.removePlayer(socket.id);
             const playerNames = room.players.map(playerId => this.players.find(p => p.id === playerId).name);
             this.io.to(roomId).emit('tetris:room:update', playerNames);
-            socket.emit('tetris:room:leave', player.name, null);
+            cb(player.name, null);
             console.log(`${socket.id} left room ${player.roomId}`);
         }
 
@@ -398,7 +398,7 @@ class GameManager {
         if (checkCondition(this.players.some(p => p.name === newName), `The name "${newName}" is already in use by another player`, socket, cb)) return;
 
         player.name = newName;
-        socket.emit('tetris:player:rename', newName, null);
+        cb(newName, null);
 
         console.log(`${socket.id} has been renamed to ${newName}`);
     }
