@@ -102,56 +102,54 @@ class GameManager {
     }
 
     handleRoomLeave(socket, cb) {
-
         // Vérifier si le joueur existe
         const player = this.players.find(player => player.id === socket.id);
         if (checkCondition(!player, player.name, `Player not found`, socket, cb)) return;
-
+    
         // Vérifier si le joueur est dans une salle
         if (checkCondition(!player.roomId, player.name, `You are not in any room`, socket, cb)) return;
-
+    
         // Vérifier si la salle existe
-        if (checkCondition(!this.rooms[player.roomId], player.name, `Room ${player.roomId} does not exist`, socket, cb)) return;
-
         const room = this.rooms[player.roomId];
+        if (checkCondition(!room, player.name, `Room ${player.roomId} does not exist`, socket, cb)) return;
+    
         const index = room.players.indexOf(socket.id);
-
+    
         // Vérifier si le joueur est dans la salle
         if (checkCondition(index === -1, player.name, `You are not in room ${player.roomId}`, socket, cb)) return;
-
+    
         if (socket.id === room.host) {
-            room.players.forEach(playerId => {
-                const currentPlayer = this.players.find(player => player.id === playerId);
-                if (!currentPlayer) {
-                    console.error(`Player ${playerId} not found.`);
+            // Sélectionner un nouveau host parmi les joueurs restants
+            const remainingPlayers = room.players.filter(playerId => playerId !== socket.id);
+            if (remainingPlayers.length > 0) {
+                const newHostId = remainingPlayers[0]; // Prendre le premier joueur restant comme nouveau host
+                room.host = newHostId;
+                const newHostPlayer = this.players.find(player => player.id === newHostId);
+                if (newHostPlayer) {
+                    newHostPlayer.isHost = true;
                 } else {
-                    currentPlayer.resetInterval.clear();
-                    currentPlayer.roomId = null;
+                    console.error(`New host player ${newHostId} not found.`);
                 }
-
-                const playerSocket = this.io.sockets.sockets.get(playerId);
-                if (!playerSocket) {
-                    console.error(`Socket for player ${playerId} not found.`);
-                } else {
-                    playerSocket.emit('tetris:room:leave', `Host (${player.name})`, null);
-                    playerSocket.leave(roomId);
-                }
-            });
-            delete this.rooms[roomId];
-            console.log(`Room ${roomId} closed.`);
-            console.log(`Host (${socket.id}) left room ${player.roomId}`);
+            } else {
+                // S'il n'y a plus personne dans la salle, supprimer la salle
+                delete this.rooms[player.roomId];
+                console.log(`Room ${player.roomId} closed.`);
+            }
         } else {
+            // Retirer le joueur de la salle
             socket.leave(player.roomId);
             room.removePlayer(socket.id);
+            // Mettre à jour les noms des joueurs dans la salle pour les clients
             const playerNames = room.players.map(playerId => this.players.find(p => p.id === playerId).name);
-            this.io.to(roomId).emit('tetris:room:update', playerNames);
+            this.io.to(player.roomId).emit('tetris:room:update', playerNames);
+            // Appeler le callback pour notifier que le joueur a quitté la salle
             cb(player.name, null);
             console.log(`${socket.id} left room ${player.roomId}`);
         }
-
+    
         player.roomId = null;
     }
-
+    
     updateIntervalFall = (playerSocket, player, room, level, timer) => {
 
         player.removePieceToGrid();
@@ -160,7 +158,7 @@ class GameManager {
 
         // Vérifier si la pièce peut bouger vers le bas
         if (!player.isPieceCanMove()) {
-            
+
             player.currentPosition.row -= 1;
             player.addPieceToGrid();
 
@@ -440,42 +438,42 @@ class GameManager {
         // Vérification si le joueur à expulser n'est pas dans la salle
         if (checkCondition(playerIndex === -1, `Player ${playerId} is not in room ${player.roomId}`, socket, cb)) return;
 
-
         if (playerId === room.host) {
-            room.players.forEach(playerId => {
-                const currentPlayer = this.players.find(player => player.id === playerId);
-                if (!currentPlayer) {
-                    console.error(`Player ${playerId} not found.`);
+            // Sélectionner un nouveau host parmi les joueurs restants
+            const remainingPlayers = room.players.filter(playerId => playerId !== socket.id);
+            if (remainingPlayers.length > 0) {
+                const newHostId = remainingPlayers[0]; // Prendre le premier joueur restant comme nouveau host
+                room.host = newHostId;
+                const newHostPlayer = this.players.find(player => player.id === newHostId);
+                if (newHostPlayer) {
+                    newHostPlayer.isHost = true;
                 } else {
-                    currentPlayer.resetInterval.clear();
-                    currentPlayer.roomId = null;
+                    console.error(`New host player ${newHostId} not found.`);
                 }
-
-                const playerSocket = this.io.sockets.sockets.get(playerId);
-                if (!playerSocket) {
-                    console.error(`Socket for player ${playerId} not found.`);
-                } else {
-                    playerSocket.emit('tetris:room:leave', `Host (${player.name})`, null);
-                    playerSocket.leave(roomId);
-                }
-            });
-            delete this.rooms[roomId];
-            console.log(`Room ${roomId} closed.`);
-            console.log(`Host (${playerId}) kicked himself`);
-            cb(null);
+            } else {
+                // S'il n'y a plus personne dans la salle, supprimer la salle
+                delete this.rooms[roomId];
+                console.log(`Room ${roomId} closed.`);
+            }
         } else {
+            // Trouver le socket du joueur
             const playerSocket = this.io.sockets.sockets.get(playerId);
-            if (!playerSocket) return;
+            if (checkCondition(!playerSocket, `Player to kick not found`, socket, cb)) return;
+            // Retirer le joueur de la salle
             playerSocket.leave(player.roomId);
-            playerSocket.emit('tetris:room:leave', playerId, null);
-
+            // Envoyer un message de départ au joueur expulsé
+            playerSocket.emit('tetris:room:kick', playerId);
+            // Retirer le joueur de la liste des joueurs de la salle
             room.players.splice(playerIndex, 1);
+            // Mettre à jour les noms des joueurs dans la salle pour les clients
             const playerNames = room.players.map(playerId => this.players.find(p => p.id === playerId).name);
             this.io.to(roomId).emit('tetris:room:update', playerNames);
+            // Mettre à jour la roomId du joueur expulsé
             this.players.find(p => p.id === playerId).roomId = null;
+
             console.log(`${playerId} kicked from room ${player.roomId}`);
-            cb(null);
         }
+        cb(null);
     }
 
     handleDisconnect(socket) {
@@ -491,31 +489,33 @@ class GameManager {
             const room = this.rooms[player.roomId];
             if (room) {
                 if (socket.id === room.host) {
-                    room.players.forEach(playerId => {
-                        const currentPlayer = this.players.find(player => player.id === playerId);
-                        if (!currentPlayer) {
-                            console.error(`Player ${playerId} not found.`);
+                    // Sélectionner un nouveau host parmi les joueurs restants
+                    const remainingPlayers = room.players.filter(playerId => playerId !== socket.id);
+                    if (remainingPlayers.length > 0) {
+                        const newHostId = remainingPlayers[0]; // Prendre le premier joueur restant comme nouveau host
+                        room.host = newHostId;
+                        const newHostPlayer = this.players.find(player => player.id === newHostId);
+                        if (newHostPlayer) {
+                            newHostPlayer.isHost = true;
                         } else {
-                            currentPlayer.resetInterval.clear();
-                            currentPlayer.roomId = null;
+                            console.error(`New host player ${newHostId} not found.`);
                         }
-                        const playerSocket = this.io.sockets.sockets.get(playerId);
-                        if (!playerSocket) {
-                            console.error(`Socket for player ${playerId} not found.`);
-                        } else {
-                            playerSocket.emit('tetris:room:leave', `Host (${player.name})`, null);
-                            playerSocket.leave(roomId);
-                        }
-                    });
-                    delete this.rooms[roomId];
-                    console.log(`Room ${roomId} closed.`);
-                    console.log(`Host ${socket.id} left room ${player.roomId}`);
+                    } else {
+                        // S'il n'y a plus personne dans la salle, supprimer la salle
+                        delete this.rooms[roomId];
+                        console.log(`Room ${roomId} closed.`);
+                    }
                 } else {
+                    // Effacer l'intervalle de réinitialisation du joueur
                     player.resetInterval.clear();
+                    // Retirer le joueur de la salle
                     socket.leave(player.roomId);
+                    // Mettre à jour la liste des joueurs de la salle
                     room.players = room.players.filter(p => p !== socket.id);
+                    // Mettre à jour les noms des joueurs dans la salle pour les clients
                     const playerNames = room.players.map(playerId => this.players.find(p => p.id === playerId).name);
                     this.io.to(roomId).emit('tetris:room:update', playerNames);
+
                     console.log(`${socket.id} left room ${player.roomId}`);
                 }
             }
