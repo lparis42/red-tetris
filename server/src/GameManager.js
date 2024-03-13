@@ -46,13 +46,13 @@ class GameManager {
 
         // Vérifier si le joueur existe
         const player = this.players.find(player => player.id === socket.id);
-        if (checkCondition(!player, null, 'Player not found', socket, cb)) return;
+        if (this.checkCondition(!player, null, 'Player not found', socket, cb)) return;
 
         // Vérifier si le joueur est déjà dans une salle
-        if (checkCondition(player.roomId !== null, null, 'You are already in a room', socket, cb)) return;
+        if (this.checkCondition(player.roomId !== null, null, 'You are already in a room', socket, cb)) return;
 
         // Vérifier si le mode est valide (STANDARD ou EXPERT)
-        if (checkCondition(mode !== 'STANDARD' && mode !== 'EXPERT', null, 'Invalid room mode', socket, cb)) return;
+        if (this.checkCondition(mode !== 'STANDARD' && mode !== 'EXPERT', null, 'Invalid room mode', socket, cb)) return;
 
         // Logique pour générer un identifiant de room aléatoire et unique
         let roomId;
@@ -73,21 +73,21 @@ class GameManager {
     handleRoomJoin(socket, roomId, cb) {
 
         // Vérifier si l'ID de la salle est spécifié
-        if (checkCondition(!roomId, roomId, 'Room ID is required', socket, cb)) return;
+        if (this.checkCondition(!roomId, roomId, 'Room ID is required', socket, cb)) return;
 
         // Vérifier si le joueur existe
         const player = this.players.find(player => player.id === socket.id);
-        if (checkCondition(!player, roomId, 'Player not found', socket, cb)) return;
+        if (this.checkCondition(!player, roomId, 'Player not found', socket, cb)) return;
 
         // Vérifier si la salle existe
         const room = this.rooms[roomId];
-        if (checkCondition(!room, roomId, `Room not found with ID: ${roomId}`, socket, cb)) return;
+        if (this.checkCondition(!room, roomId, `Room not found with ID: ${roomId}`, socket, cb)) return;
 
         // Vérifier si la salle est pleine (max 9 joueurs)
-        if (checkCondition(room.players.length >= 9, roomId, 'Room is full', socket, cb)) return;
+        if (this.checkCondition(room.players.length >= 9, roomId, 'Room is full', socket, cb)) return;
 
         // Vérifier si le joueur est déjà dans une salle
-        if (checkCondition(player.roomId !== null, roomId, 'Player is already in a room', socket, cb)) return;
+        if (this.checkCondition(player.roomId !== null, roomId, 'Player is already in a room', socket, cb)) return;
 
         room.addPlayer(player.id, player.name);
         player.roomId = roomId;
@@ -104,19 +104,19 @@ class GameManager {
     handleRoomLeave(socket, cb) {
         // Vérifier si le joueur existe
         const player = this.players.find(player => player.id === socket.id);
-        if (checkCondition(!player, player.name, `Player not found`, socket, cb)) return;
+        if (this.checkCondition(!player, player.name, `Player not found`, socket, cb)) return;
     
         // Vérifier si le joueur est dans une salle
-        if (checkCondition(!player.roomId, player.name, `You are not in any room`, socket, cb)) return;
+        if (this.checkCondition(!player.roomId, player.name, `You are not in any room`, socket, cb)) return;
     
         // Vérifier si la salle existe
         const room = this.rooms[player.roomId];
-        if (checkCondition(!room, player.name, `Room ${player.roomId} does not exist`, socket, cb)) return;
+        if (this.checkCondition(!room, player.name, `Room ${player.roomId} does not exist`, socket, cb)) return;
     
         const index = room.players.indexOf(socket.id);
     
         // Vérifier si le joueur est dans la salle
-        if (checkCondition(index === -1, player.name, `You are not in room ${player.roomId}`, socket, cb)) return;
+        if (this.checkCondition(index === -1, player.name, `You are not in room ${player.roomId}`, socket, cb)) return;
     
         if (socket.id === room.host) {
             // Sélectionner un nouveau host parmi les joueurs restants
@@ -150,7 +150,7 @@ class GameManager {
         player.roomId = null;
     }
     
-    updateIntervalFall = (playerSocket, player, room, level, timer) => {
+    updateIntervalFall(playerSocket, player, room, level, timer) {
 
         player.removePieceToGrid();
         player.addPenalty();
@@ -205,7 +205,7 @@ class GameManager {
             }
             player.resetInterval.clear();
             player.resetInterval.set(() => {
-                updateIntervalFall(playerSocket, player, room, level, timer);
+                this.updateIntervalFall(playerSocket, player, room, level, timer);
             }, timer);
         }
 
@@ -233,22 +233,22 @@ class GameManager {
 
         // Vérifier si le joueur existe
         const player = this.players.find(player => player.id === socket.id);
-        if (checkCondition(!player, `Player not found`, socket, cb)) return;
+        if (this.checkCondition(!player, `Player not found`, socket, cb)) return;
 
         // Vérifier si le joueur est dans une salle
-        if (checkCondition(!player.roomId, `You are not in any room`, socket, cb)) return;
+        if (this.checkCondition(!player.roomId, `You are not in any room`, socket, cb)) return;
 
         // Vérifier si la salle existe
-        if (checkCondition(!this.rooms[player.roomId], `Room does not exist`, socket, cb)) return;
+        if (this.checkCondition(!this.rooms[player.roomId], `Room does not exist`, socket, cb)) return;
 
         const room = this.rooms[player.roomId];
 
         // Vérifier si le joueur est dans la salle
         const index = room.players.indexOf(socket.id);
-        if (checkCondition(index === -1, `You are not in the room`, socket, cb)) return;
+        if (this.checkCondition(index === -1, `You are not in the room`, socket, cb)) return;
 
         // Vérifier si le jeu a déjà commencé dans la salle
-        if (checkCondition(player.isGameStart, `Game already started`, socket, cb)) return;
+        if (this.checkCondition(player.isGameStart, `Game already started`, socket, cb)) return;
 
         const piece = new Piece();
         const position = new Position(piece.shape);
@@ -265,7 +265,7 @@ class GameManager {
 
             player.resetInterval.set(() => {
                 const playerSocket = this.io.sockets.sockets.get(player.id);
-                updateIntervalFall(playerSocket, player, room, 0, 800);
+                this.updateIntervalFall(playerSocket, player, room, 0, 800);
             }, 800);
         });
 
@@ -294,21 +294,21 @@ class GameManager {
     handleRoomGameAction(socket, action, cb) {
 
         // Vérifier si l'action est valide
-        if (checkCondition(!['move-left', 'move-right', 'move-down', 'move-space', 'rotate-left', 'rotate-right'].includes(action), `Invalid action`, socket, cb)) return;
+        if (this.checkCondition(!['move-left', 'move-right', 'move-down', 'move-space', 'rotate-left', 'rotate-right'].includes(action), `Invalid action`, socket, cb)) return;
 
         // Vérifier si le joueur existe et est dans une salle
         const player = this.players.find(player => player.id === socket.id && player.roomId);
-        if (checkCondition(!player, `Player not found`, socket, cb)) return;
+        if (this.checkCondition(!player, `Player not found`, socket, cb)) return;
 
         // Vérifier si la salle existe
         const room = this.rooms[player.roomId];
-        if (checkCondition(!room, `Room not found`, socket, cb)) return;
+        if (this.checkCondition(!room, `Room not found`, socket, cb)) return;
 
         // Vérifier si le joueur est dans la salle
-        if (checkCondition(!room.players.includes(player.id), `Player is not in the room ${room.id}`, socket, cb)) return;
+        if (this.checkCondition(!room.players.includes(player.id), `Player is not in the room ${room.id}`, socket, cb)) return;
 
         // Vérifier si le jeu a commencé
-        if (checkCondition(!player.isGameStart, `Game has not started yet`, socket, cb)) return;
+        if (this.checkCondition(!player.isGameStart, `Game has not started yet`, socket, cb)) return;
 
 
         // Appliquer l'action du joueur
@@ -383,17 +383,17 @@ class GameManager {
     handlePlayerRename(socket, newName, cb) {
 
         // Vérification si le joueur existe
-        if (checkCondition(!this.players.find(player => player.id === socket.id), `Player not found.`, socket, cb)) return;
+        if (this.checkCondition(!this.players.find(player => player.id === socket.id), `Player not found.`, socket, cb)) return;
 
         // Vérification de la longueur du nouveau nom
-        if (checkCondition(newName.length < 1 || newName.length > 8, `Name must be between 1 and 8 characters long.`, socket, cb)) return;
+        if (this.checkCondition(newName.length < 1 || newName.length > 8, `Name must be between 1 and 8 characters long.`, socket, cb)) return;
 
         // Vérification des caractères autorisés dans le nouveau nom
         const allowedCharacters = /^[a-zA-Z0-9]+$/;
-        if (checkCondition(!allowedCharacters.test(newName), `Name can only contain alphabets (uppercase or lowercase) and numbers.`, socket, cb)) return;
+        if (this.checkCondition(!allowedCharacters.test(newName), `Name can only contain alphabets (uppercase or lowercase) and numbers.`, socket, cb)) return;
 
         // Vérification de l'unicité du nouveau nom choisi
-        if (checkCondition(this.players.some(p => p.name === newName), `The name "${newName}" is already in use by another player`, socket, cb)) return;
+        if (this.checkCondition(this.players.some(p => p.name === newName), `The name "${newName}" is already in use by another player`, socket, cb)) return;
 
         player.name = newName;
         cb(newName, null);
@@ -417,26 +417,26 @@ class GameManager {
 
     handleRoomKick(socket, playerId, cb) {
         // Vérification si playerId est vide
-        if (checkCondition(!playerId, `Invalid playerId`, socket, cb)) return;
+        if (this.checkCondition(!playerId, `Invalid playerId`, socket, cb)) return;
 
         // Vérification si le joueur n'est pas trouvé
         const player = this.players.find(player => player.id === socket.id);
-        if (checkCondition(!player, `Player not found`, socket, cb)) return;
+        if (this.checkCondition(!player, `Player not found`, socket, cb)) return;
 
         // Vérification si le joueur n'est pas dans une salle
-        if (checkCondition(!player.roomId, `Player is not in any room`, socket, cb)) return;
+        if (this.checkCondition(!player.roomId, `Player is not in any room`, socket, cb)) return;
 
         // Vérification si la salle associée au joueur existe
         const room = this.rooms[player.roomId];
-        if (checkCondition(!room, `Room ${player.roomId} not found`, socket, cb)) return;
+        if (this.checkCondition(!room, `Room ${player.roomId} not found`, socket, cb)) return;
 
         // Vérification si le joueur est l'hôte de la salle
-        if (checkCondition(player.id !== room.host, `You are not the host of room ${player.roomId}`, socket, cb)) return;
+        if (this.checkCondition(player.id !== room.host, `You are not the host of room ${player.roomId}`, socket, cb)) return;
 
         const playerIndex = room.players.indexOf(playerId);
 
         // Vérification si le joueur à expulser n'est pas dans la salle
-        if (checkCondition(playerIndex === -1, `Player ${playerId} is not in room ${player.roomId}`, socket, cb)) return;
+        if (this.checkCondition(playerIndex === -1, `Player ${playerId} is not in room ${player.roomId}`, socket, cb)) return;
 
         if (playerId === room.host) {
             // Sélectionner un nouveau host parmi les joueurs restants
@@ -458,7 +458,7 @@ class GameManager {
         } else {
             // Trouver le socket du joueur
             const playerSocket = this.io.sockets.sockets.get(playerId);
-            if (checkCondition(!playerSocket, `Player to kick not found`, socket, cb)) return;
+            if (this.checkCondition(!playerSocket, `Player to kick not found`, socket, cb)) return;
             // Retirer le joueur de la salle
             playerSocket.leave(player.roomId);
             // Envoyer un message de départ au joueur expulsé

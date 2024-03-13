@@ -12,7 +12,7 @@ class Server {
         this.server = http.createServer(this.app);
         this.io = socketIo(this.server, {
             cors: {
-                origin: ["http://localhost:3000", "http://red-tetris.ddns.net"],
+                origin: ["http://localhost:3000"/*, "http://red-tetris.ddns.net"*/],
                 methods: ["GET", "POST"]
             }
         });
@@ -26,7 +26,7 @@ class Server {
         // Middleware pour autoriser les requêtes CORS
         this.app.use((req, res, next) => {
             // Autoriser les requêtes depuis les domaines spécifiés
-            res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000', 'http://red-tetris.ddns.net');
+            res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000'/*, 'http://red-tetris.ddns.net'*/);
             // Autoriser les méthodes HTTP spécifiées
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
             // Autoriser les en-têtes spécifiés
