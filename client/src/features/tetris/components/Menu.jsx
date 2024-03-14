@@ -21,22 +21,15 @@ export default function Menu(
 
 	useEffect(() =>
 	{
-		const onRoomJoined = (id) =>
+		const onRoomJoined = ({ id, mode, active, leader }) =>
 		{
-			dispatch(updateGame({ id }));
-		};
-
-		const onRoomUpdated = ({ players }) => // Todo: Missing host/leader
-		{
-			dispatch(updateGame({ leader: { id: players[0] }, players })); // Todo: Fix `leader`
+			dispatch(updateGame({ id, mode, active, leader }));
 		};
 
 		socket.on('tetris:room:joined', onRoomJoined);
-		socket.on('tetris:room:updated', onRoomUpdated);
 
 		return () =>
 		{
-			socket.off('tetris:room:updated');
 			socket.off('tetris:room:joined');
 		};
 	}, [ socket, dispatch ]);

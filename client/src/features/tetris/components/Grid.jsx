@@ -18,6 +18,20 @@ export default function Grid(
 	{ grid }
 )
 {
+	if ( grid.length < 4 )
+	{
+		grid = [
+			new Array(grid[0].length).fill(0),
+			...grid,
+			new Array(grid[0].length).fill(0)
+		];
+	}
+
+	if ( grid[0].length < 4 )
+	{
+		grid = grid.map((row) => [ 0, ...row, 0 ]);
+	}
+
 	return (
 		<div style={ { '--grid-rows': grid.length, '--grid-cols': grid[0].length } } className={ `tetris-grid` }>
 			{ grid.map((row, row_idx) =>

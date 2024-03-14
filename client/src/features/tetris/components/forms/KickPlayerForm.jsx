@@ -5,7 +5,7 @@ import Button from "../../../../core/components/ui/buttons/Button";
 
 // Component -------------------------------------------------------------------
 export default function KickPlayerForm(
-	{ player }
+	{ id }
 )
 {
 	const socket = useContext(SocketContext);
@@ -14,7 +14,7 @@ export default function KickPlayerForm(
 	{
 		event.preventDefault();
 
-		socket.emit('tetris:room:kick', { id: player.id });
+		socket.emit('tetris:room:kick', { id });
 	}
 
 	return (

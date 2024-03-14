@@ -1,10 +1,10 @@
 import { useEffect, useContext, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { SocketContext } from '../contexts/SocketContext';
-import { SelectTetris, updateGame } from '../store.slice';
-import Board from './Board';
+import { SelectTetris, updateGame, updateGrid, updatePiece } from '../store.slice';
 import Logo from '../../../core/components/logo/Logo';
 import LeaveGameForm from './forms/LeaveGameForm';
+import Board from './Board';
 
 // Component -------------------------------------------------------------------
 export default function Game()
@@ -12,12 +12,6 @@ export default function Game()
 	const socket = useContext(SocketContext);
 	const store = useSelector(SelectTetris);
 	const dispatch = useDispatch();
-
-	const halfBoardsCount = (store.game.boards.length / 2) | 0;
-	const [ rows = 1, cols = 1 ] = [
-		[ 1, 1 ], [ 1, 1 ], [ 2, 1 ], [ 2, 2 ],
-		[ 2, 2 ], [ 3, 2 ], [ 3, 2 ], [ 3, 3 ]
-	][halfBoardsCount];
 
 	useEffect(() =>
 	{
@@ -39,13 +33,26 @@ export default function Game()
 			}
 		};
 
-		// Todo: Implement
-		socket.on('tetris:game:updated', (board) =>
+		const onGameUpdated = ({ piece, grid }) =>
 		{
-			console.log('GameUpdated: ', board);
-			// dispatch(updateBoard(board));
-		});
-		socket.on('tetris:game:ended', () => dispatch(updateGame({ active: false }))); // Todo: Implement
+			if ( piece )
+			{
+				dispatch(updatePiece(piece));
+			}
+
+			if ( grid )
+			{
+				dispatch(updateGrid(grid));
+			}
+		};
+
+		const onGameEnded = () =>
+		{
+			dispatch(updateGame({ active: false }));
+		};
+
+		socket.on('tetris:game:updated', onGameUpdated);
+		socket.on('tetris:game:ended', onGameEnded);
 
 		document.addEventListener('keydown', onKeyDown);
 
@@ -58,20 +65,22 @@ export default function Game()
 		};
 	}, [ socket, dispatch ]);
 
-	const players = useMemo(() =>
-	{
-		return store.game.boards.map(board => board.player).filter(player => player.id !== store.player.id);
-	}, []);
+	const playersCountSplit = (store.game.players.length / 2) | 0;
 
-	const leftSpecters = useMemo(() =>
-	{
-		return players.slice(0, halfBoardsCount);
-	}, []);
+	const [ rows = 1, cols = 1 ] = [
+		[ 1, 1 ], [ 1, 1 ], [ 2, 1 ], [ 2, 2 ],
+		[ 2, 2 ], [ 3, 2 ], [ 3, 2 ], [ 3, 3 ]
+	][playersCountSplit];
 
-	const rightSpecters = useMemo(() =>
+	const { leftPlayers, rightPlayers } = useMemo(() =>
 	{
-		return players.slice(halfBoardsCount);
-	}, []);
+		const players = store.game.players.filter((player) => player.id !== store.player.id);
+
+		return {
+			leftPlayers: players.slice(0, playersCountSplit),
+			rightPlayers: players.slice(playersCountSplit)
+		};
+	}, [ store, playersCountSplit ]);
 
 	return (
 		<div className={ `tetris-game` }>
@@ -80,16 +89,16 @@ export default function Game()
 			</header>
 			<div className={ `tetris-game__content` }>
 				<div style={{ '--cols': cols, '--rows': rows }} className={ `tetris-game__specters` } >
-					{ leftSpecters.map(player =>
-						<Board key={ player.id } id={ player.id } />
+					{ leftPlayers.map((player) =>
+						<Board key={ player.id } player={ player } />
 					)}
 				</div>
 
-				<Board id={ store.player.id } />
+				<Board player={ store.game.players.find((player) => player.id === store.player.id) } />
 
 				<div  style={{ '--cols': cols, '--rows': rows }} className={ `tetris-game__specters` }>
-					{ rightSpecters.map(player =>
-						<Board key={ player.id } id={ player.id } />
+					{ rightPlayers.map((player) =>
+						<Board key={ player.id } player={ player } />
 					)}
 				</div>
 			</div>

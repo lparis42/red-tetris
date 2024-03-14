@@ -11,15 +11,19 @@ const initialState =
 		id: undefined,
 		mode: undefined,
 		active: false,
-		leader: { id: undefined, name: undefined },
-		boards: [
+		leader: {
+			id: undefined,
+			name: undefined,
+		},
+		players: [
 			// {
-			// 	player: { id: 'Player_1', name: `John` },
+			// 	id: 'Player_1',
+			// 	name: `John`,
 			// 	piece: {
 			// 		current:
 			// 		{
 			// 			position: { x: 3, y: 4 },
-			// 			grid: [
+			// 			content: [
 			// 				[ 3, 3, 0 ],
 			// 				[ 0, 3, 3 ],
 			// 			],
@@ -56,7 +60,7 @@ const initialState =
 			// 	]
 			// },
 		],
-	}
+	},
 };
 
 // Slice -----------------------------------------------------------------------
@@ -68,35 +72,122 @@ const slice = createSlice(
 	{
 		updatePlayer: (state, { payload }) =>
 		{
-			state.player = { ...state.player, ...payload };
+			const { id, name } = payload;
+
+			if ( id )
+			{
+				state.player.id = id;
+			}
+
+			if ( name )
+			{
+				state.player.name = name;
+			}
 		},
 		updateGame: (state, { payload }) =>
 		{
-			state.game = { ...state.game, ...payload };
-		},
-		updateBoard: (state, { payload }) =>
-		{
-			let board = state.game.boards.find((b) => b.id === payload.id);
+			const { id, mode, active, leader } = payload;
 
-			if ( ! board )
+			if ( id )
 			{
-				board = {
-					player: { id: undefined, name: undefined },
-					piece: {
-						current: {
-							position: { x: undefined, y: undefined },
-							grid: [],
-						},
-						next: [],
-						hold: [],
-					},
-					grid: [],
-				};
-
-				state.game.boards.push(board);
+				state.game.id = id;
 			}
 
-			// Todo: Modifications
+			if ( mode )
+			{
+				state.game.mode = mode;
+			}
+
+			if ( active )
+			{
+				state.game.active = active;
+			}
+
+			if ( leader )
+			{
+				state.game.leader = leader;
+			}
+		},
+		updatePlayers: (state, { payload }) =>
+		{
+			const { players } = payload;
+
+			state.game.players = players.map((player) =>
+			{
+				const data = state.game.players.find((p) => p.id === player.id);
+
+				if ( data )
+				{
+					player.name = player.name ?? data.name;
+					player.piece = data.piece;
+					player.grid = data.grid;
+				}
+
+				return player;
+			});
+		},
+		updatePiece: (state, { payload }) =>
+		{
+			const { id, current, next, hold } = payload;
+
+			const player = state.game.players.find((player) => player.id === id);
+
+			if ( ! player )
+			{
+				return console.log(`Player not found.`);
+			}
+
+			if ( ! player.piece )
+			{
+				player.piece = {
+					current: {
+						position: { x: undefined, y: undefined },
+						content: [],
+					},
+					next: [
+						[ 0 ],
+					],
+					hold: [
+						[ 0 ],
+					],
+				};
+			}
+
+			if ( current )
+			{
+				const { position, content } = current;
+
+				if ( position )
+				{
+					player.piece.current.position = position;
+				}
+
+				if ( position )
+				{
+					player.piece.current.content = content;
+				}
+			}
+
+			if ( next )
+			{
+				player.piece.next = next;
+			}
+
+			if ( hold )
+			{
+				player.piece.hold = hold;
+			}
+		},
+		updateGrid: (state, { id, grid }) =>
+		{
+			const player = state.game.players.find((player) => player.id === id);
+
+			if ( ! player )
+			{
+				return console.log(`Player not found.`);
+			}
+
+			player.grid = grid;
 		},
 		leaveGame: (state) =>
 		{
@@ -109,6 +200,9 @@ const slice = createSlice(
 export const {
 	updatePlayer,
 	updateGame,
+	updatePlayers,
+	updatePiece,
+	updateGrid,
 	leaveGame,
 } = slice.actions;
 

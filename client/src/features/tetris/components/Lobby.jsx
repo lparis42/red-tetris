@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { SocketContext } from "../contexts/SocketContext";
 import { SelectTetris, updateGame } from "../store.slice";
 import Divider from "../../../core/components/ui/dividers/Divider";
-import LeaveGameForm from "./forms/LeaveGameForm";
 import Table from "../../../core/components/ui/tables/Table";
+import LeaveGameForm from "./forms/LeaveGameForm";
 import KickPlayerForm from './forms/KickPlayerForm';
 import StartGameForm from "./forms/StartGameForm";
 
@@ -44,14 +44,14 @@ export default function Lobby()
 					{ title: `Players`, span: ( isGameLeader ) ? `2` : `1` },
 				] }
 				rows={
-					store.game.boards.map(({ player }) =>
+					store.game.players.map(({ id, name }) =>
 					{
 						if ( isGameLeader )
 						{
-							return [ player.name, <KickPlayerForm player={ player } /> ];
+							return [ name, <KickPlayerForm player={ { id } } /> ];
 						}
 
-						return [ player.name ];
+						return [ name ];
 					})
 				}
 			/>
