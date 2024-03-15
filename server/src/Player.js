@@ -8,7 +8,7 @@ class Player {
         this.id = id;
         this.name = id;
         this.roomId = null;
-        this.grid = null;
+        this.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
         this.currentPiece = null;
         this.currentPosition = null;
         this.nextPiece = null;
@@ -66,19 +66,8 @@ class Player {
         // Logique pour mettre à jour la grille
         this.currentPiece.shape.forEach((rowPiece, rowIndex) => {
             rowPiece.forEach((cell, colIndex) => {
-                if (cell === 1 && this.currentPosition.row + rowIndex >= 0) {
-                    this.grid[this.currentPosition.row + rowIndex][this.currentPosition.col + colIndex] = this.currentPiece.color;
-                }
-            });
-        });
-    }
-
-    removePieceToGrid() {
-        // Logique pour mettre à jour la grille
-        this.currentPiece.shape.forEach((rowPiece, rowIndex) => {
-            rowPiece.forEach((cell, colIndex) => {
-                if (cell === 1 && this.currentPosition.row + rowIndex >= 0) {
-                    this.grid[this.currentPosition.row + rowIndex][this.currentPosition.col + colIndex] = 0;
+                if (cell >= 1 && this.currentPosition.row + rowIndex >= 0) {
+                    this.grid[this.currentPosition.row + rowIndex][this.currentPosition.col + colIndex] = cell;
                 }
             });
         });
@@ -105,24 +94,24 @@ class Player {
     }
 
     calculateSpectrum() {
-        const COLS = this.grid[0].length;
-        const spectrum = [this.id];
+        const spectrum = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     
         // Pour chaque colonne, trouver la première ligne occupée par une pièce
         for (let col = 0; col < COLS; col++) {
-            let height = 0;
-            // Parcourir chaque ligne de la colonne jusqu'à trouver une pièce
-            for (let row = 0; row < this.grid.length; row++) {
+            let foundPiece = false;
+            // Parcourir chaque ligne de la colonne
+            for (let row = 0; row < ROWS; row++) {
                 if (this.grid[row][col] !== 0) {
-                    height = this.grid.length - row; // Calculer la hauteur de la colonne
-                    break; // Sortir de la boucle une fois qu'une pièce est trouvée
+                    foundPiece = true;
+                }
+                if (foundPiece) {
+                    spectrum[row][col] = -2;
                 }
             }
-            spectrum.push(height); // Ajouter la hauteur de la colonne au spectre
         }
     
         return spectrum;
-    }
+    }    
 
     isGameEnd() {
         for (let col = 0; col < COLS; col++) {

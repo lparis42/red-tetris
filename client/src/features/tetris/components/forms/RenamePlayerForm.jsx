@@ -39,7 +39,7 @@ export default function RenamePlayerForm(
 				return console.log(`SocketIO:Error: `, err);
 			}
 
-			const { name, error } = res;
+			const { error, name } = res;
 
 			if ( error )
 			{

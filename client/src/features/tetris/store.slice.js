@@ -4,20 +4,15 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState =
 {
 	player: {
-		id: undefined,
 		name: undefined,
 	},
 	game: {
 		id: undefined,
 		mode: undefined,
 		active: false,
-		leader: {
-			id: undefined,
-			name: undefined,
-		},
+		leader: undefined,
 		players: [
 			// {
-			// 	id: 'Player_1',
 			// 	name: `John`,
 			// 	piece: {
 			// 		current:
@@ -65,136 +60,107 @@ const initialState =
 
 // Slice -----------------------------------------------------------------------
 const slice = createSlice(
-{
-	name: 'tetris',
-	initialState,
-	reducers:
 	{
-		updatePlayer: (state, { payload }) =>
+		name: 'tetris',
+		initialState,
+		reducers:
 		{
-			const { id, name } = payload;
+			updatePlayer: (state, { payload }) => {
+				const { name } = payload;
 
-			if ( id )
-			{
-				state.player.id = id;
-			}
+				if (name) {
+					state.player.name = name;
+				}
+			},
+			updateGame: (state, { payload }) => {
+				const { id, mode, active, leader } = payload;
 
-			if ( name )
-			{
-				state.player.name = name;
-			}
-		},
-		updateGame: (state, { payload }) =>
-		{
-			const { id, mode, active, leader } = payload;
-
-			if ( id )
-			{
-				state.game.id = id;
-			}
-
-			if ( mode )
-			{
-				state.game.mode = mode;
-			}
-
-			if ( active )
-			{
-				state.game.active = active;
-			}
-
-			if ( leader )
-			{
-				state.game.leader = leader;
-			}
-		},
-		updatePlayers: (state, { payload }) =>
-		{
-			const { players } = payload;
-
-			state.game.players = players.map((player) =>
-			{
-				const data = state.game.players.find((p) => p.id === player.id);
-
-				if ( data )
-				{
-					player.name = player.name ?? data.name;
-					player.piece = data.piece;
-					player.grid = data.grid;
+				if (id) {
+					state.game.id = id;
 				}
 
-				return player;
-			});
-		},
-		updatePiece: (state, { payload }) =>
-		{
-			const { id, current, next, hold } = payload;
-
-			const player = state.game.players.find((player) => player.id === id);
-
-			if ( ! player )
-			{
-				return console.log(`Player not found.`);
-			}
-
-			if ( ! player.piece )
-			{
-				player.piece = {
-					current: {
-						position: { x: undefined, y: undefined },
-						content: [],
-					},
-					next: [
-						[ 0 ],
-					],
-					hold: [
-						[ 0 ],
-					],
-				};
-			}
-
-			if ( current )
-			{
-				const { position, content } = current;
-
-				if ( position )
-				{
-					player.piece.current.position = position;
+				if (mode) {
+					state.game.mode = mode;
 				}
 
-				if ( position )
-				{
-					player.piece.current.content = content;
+				if (active) {
+					state.game.active = active;
 				}
-			}
 
-			if ( next )
-			{
-				player.piece.next = next;
-			}
+				if (leader) {
+					state.game.leader = leader;
+				}
+			},
+			updatePlayers: (state, { payload }) => {
+				const { players } = payload;
 
-			if ( hold )
-			{
-				player.piece.hold = hold;
-			}
+				// Si state.game.players est vide, la liste reste toujours vide (?)
+				state.game.players = players.map((player) => {
+					const data = state.game.players.find((p) => p.name === player.name);
+
+					if (data) {
+						player.name = data.name;
+						player.piece = data.piece;
+						player.grid = data.grid;
+					}
+
+					return player;
+				});
+			},
+			updatePiece: (state, { payload }) => {
+				const { id, current, next, hold } = payload;
+
+				const player = state.game.players.find((player) => player.id === id);
+
+				if (!player) {
+					return console.log(`Player not found.`);
+				}
+
+				if (!player.piece) {
+					player.piece = {
+						current: {
+							position: { x: undefined, y: undefined },
+							content: [],
+						},
+						next: [],
+						hold: [],
+					};
+				}
+
+				if (current) {
+					const { position, content } = current;
+
+					if (position) {
+						player.piece.current.position = position;
+					}
+
+					if (position) {
+						player.piece.current.content = content;
+					}
+				}
+
+				if (next) {
+					player.piece.next = next;
+				}
+
+				if (hold) {
+					player.piece.hold = hold;
+				}
+			},
+			updateGrid: (state, { id, grid }) => {
+				const player = state.game.players.find((player) => player.id === id);
+
+				if (!player) {
+					return console.log(`Player not found.`);
+				}
+
+				player.grid = grid;
+			},
+			leaveGame: (state) => {
+				state.game = initialState.game;
+			},
 		},
-		updateGrid: (state, { id, grid }) =>
-		{
-			const player = state.game.players.find((player) => player.id === id);
-
-			if ( ! player )
-			{
-				return console.log(`Player not found.`);
-			}
-
-			player.grid = grid;
-		},
-		leaveGame: (state) =>
-		{
-			state.game = initialState.game;
-		},
-	},
-});
+	});
 
 // Actions ---------------------------------------------------------------------
 export const {

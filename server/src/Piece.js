@@ -6,42 +6,40 @@ const shapes = {
         [1, 1]
     ],
     I: [
-        [1],
-        [1],
-        [1],
-        [1]
+        [2],
+        [2],
+        [2],
+        [2]
     ],
     L: [
-        [1, 0],
-        [1, 0],
-        [1, 1]
+        [3, 0],
+        [3, 0],
+        [3, 3]
     ],
     J: [
-        [0, 1],
-        [0, 1],
-        [1, 1]
+        [0, 4],
+        [0, 4],
+        [4, 4]
     ],
     T: [
-        [1, 1, 1],
-        [0, 1, 0]
+        [5, 5, 5],
+        [0, 5, 0]
     ],
     Z: [
-        [1, 1, 0],
-        [0, 1, 1]
+        [6, 6, 0],
+        [0, 6, 6]
     ],
     S: [
-        [0, 1, 1],
-        [1, 1, 0]
+        [0, 7, 7],
+        [7, 7, 0]
     ]
 };
 
 class Piece {
     constructor() {
-        // Logique pour générer une pièce aléatoire
         const pieces = Object.values(shapes);
         const randomIndex = Math.floor(Math.random() * pieces.length);
         this.shape = pieces[randomIndex];
-        this.color = randomIndex + 1;
     }
 
     

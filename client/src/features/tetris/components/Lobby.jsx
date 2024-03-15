@@ -35,7 +35,7 @@ export default function Lobby()
 				] }
 				rows={ [
 					[ `Mode`, store.game.mode ],
-					[ `Leader`, store.game.leader.name ],
+					[ `Leader`, store.game.leader ],
 				] }
 			/>
 
@@ -44,11 +44,11 @@ export default function Lobby()
 					{ title: `Players`, span: ( isGameLeader ) ? `2` : `1` },
 				] }
 				rows={
-					store.game.players.map(({ id, name }) =>
+					store.game.players.map(({ name }) =>
 					{
 						if ( isGameLeader )
 						{
-							return [ name, <KickPlayerForm player={ { id } } /> ];
+							return [ name, <KickPlayerForm player={ { name } } /> ];
 						}
 
 						return [ name ];
