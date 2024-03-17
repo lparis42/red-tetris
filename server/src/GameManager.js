@@ -7,25 +7,40 @@ const Position = require('./Position');
 const ROWS = 20;
 const COLS = 10;
 
-class GameManager {
-    constructor(io) {
+class GameManager
+{
+    #players;
+    #rooms;
+
+    constructor(io)
+    {
+        this.#players = new Map();
+        this.#rooms = new Map();
+
         this.io = io;
         this.players = [];
         this.rooms = {};
         this.setupSocketHandlers();
     }
 
-    setupSocketHandlers() {
-        this.io.on('connection', (socket) => {
+    setupSocketHandlers()
+    {
+        this.io.on('connection', (socket) =>
+        {
             console.log(`${socket.id} connected`);
-            this.players.push(new Player(socket.id));
+
+            const player = new Player(socket.id);
+
+            this.#players.set(socket.id, player);
+            this.players.push(player);
+
+            socket.on('tetris:player:rename', (payload, cb) => this.handlePlayerRename(socket, payload, cb));
 
             socket.on('tetris:room:create', (payload, cb) => this.handleRoomCreate(socket, payload, cb));
             socket.on('tetris:room:join', (payload, cb) => this.handleRoomJoin(socket, payload, cb));
             socket.on('tetris:room:leave', (cb) => this.handleRoomLeave(socket, cb));
             socket.on('tetris:game:start', (cb) => this.handleRoomGameStart(socket, cb));
             socket.on('tetris:game:action', (action, cb) => this.handleRoomGameAction(socket, action, cb));
-            socket.on('tetris:player:rename', (payload, cb) => this.handlePlayerRename(socket, payload, cb));
             socket.on('tetris:room:list', (roomId, cb) => this.handleRoomList(socket, roomId, cb));
             socket.on('tetris:room:kick', (playerId, cb) => this.handleRoomKick(socket, playerId, cb));
 
@@ -40,6 +55,66 @@ class GameManager {
             return true;
         }
         return false;
+    }
+
+    handlePlayerRename(socket, payload, cb)
+    {
+        const player = this.#players.get(socket.id);
+
+        const { name } = payload ?? {};
+
+        // Name is Required
+        if ( ! name )
+        {
+            if ( typeof cb === 'function' )
+            {
+                cb({ error: `Name is required` });
+            }
+
+            return ;
+        }
+
+        // Check Name Format
+        if ( ! Player.isValidName(name) )
+        {
+            if ( typeof cb === 'function' )
+            {
+                cb({ error: `Invalid name format: (a-z, A-Z, 0-9, _){3, 16}` });
+            }
+
+            return ;
+        }
+
+        // Check Name Uniqueness
+        let nameIsUnique = true;
+
+        for ( const other of this.#players.values() )
+        {
+            if ( other.name === name )
+            {
+                nameIsUnique = false;
+                break ;
+            }
+        }
+
+        if ( ! nameIsUnique )
+        {
+            if ( typeof cb === 'function' )
+            {
+                cb({ error: `Name is already taken` });
+            }
+
+            return ;
+        }
+
+        // Set Player
+        player.name = name;
+
+        // Response
+        if ( typeof cb === 'function' )
+        {
+            cb({ name });
+        }
     }
 
     handleRoomCreate(socket, payload, cb) {
@@ -382,19 +457,6 @@ class GameManager {
             content: player.grid
         };
         socket.emit('tetris:room:game:update:grid', playerGrid);
-    }
-
-    handlePlayerRename(socket, payload, cb) {
-        const { name } = payload;
-        const player = this.players.find(player => player.id === socket.id);
-        if (this.checkCondition(!player, `Player not found.`, socket, cb)) return;
-        if (this.checkCondition(name.length < 3 || name.length > 16, `Name must be between 3 and 16 characters long.`, socket, cb)) return;
-        const allowedCharacters = /^(?:\w){3,16}$/;
-        if (this.checkCondition(!allowedCharacters.test(name), `Name can only contain alphabets (uppercase or lowercase) and numbers.`, socket, cb)) return;
-        if (this.checkCondition(this.players.some(p => p.name === name), `The name "${name}" is already in use by another player`, socket, cb)) return;
-        player.name = name;
-        cb(null, { name: name });
-        console.log(`${socket.id} has been renamed to ${name}`);
     }
 
     handleRoomList(socket, roomId, cb) {

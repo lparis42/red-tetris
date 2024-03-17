@@ -27,6 +27,11 @@ class Player {
         };
     }
 
+    static isValidName(name)
+    {
+        return (/^(?:\w){3,16}$/.test(name));
+    }
+
     isPieceCanMove() {
         // Logique pour vérifier le déplacement de la pièce
         for (let r = 0; r < this.currentPiece.shape.length; r++) {
@@ -95,7 +100,7 @@ class Player {
 
     calculateSpectrum() {
         const spectrum = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-    
+
         // Pour chaque colonne, trouver la première ligne occupée par une pièce
         for (let col = 0; col < COLS; col++) {
             let foundPiece = false;
@@ -109,9 +114,9 @@ class Player {
                 }
             }
         }
-    
+
         return spectrum;
-    }    
+    }
 
     isGameEnd() {
         for (let col = 0; col < COLS; col++) {
