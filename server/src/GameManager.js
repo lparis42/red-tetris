@@ -561,68 +561,11 @@ class GameManager
         cb(null, playerId);
     }
 
-    handleDisconnect(socket) {
-        const player = this.players.find(player => player.id === socket.id);
-        if (!player) {
-            console.error(`Player with socket ID ${socket.id} not found.`);
-            return;
-        }
+    handleDisconnect(socket)
+    {
+        this.handleRoomLeave(socket);
 
-        if (player.roomId) {
-            const room = this.rooms[player.roomId];
-            if (room) {
-                if (socket.id === room.host) {
-                    const remainingPlayers = room.players.filter(playerId => playerId !== socket.id);
-                    if (remainingPlayers.length > 0) {
-                        const newHostId = remainingPlayers[0];
-                        room.host = newHostId;
-                        const newHostPlayer = this.players.find(player => player.id === newHostId);
-                        if (newHostPlayer) {
-                            newHostPlayer.isHost = true;
-                        } else {
-                            console.error(`New host player ${newHostId} not found.`);
-                        }
-                    } else {
-                        delete this.rooms[roomId];
-                        console.log(`Room ${roomId} closed.`);
-                    }
-                } else {
-                    player.resetInterval.clear();
-                    socket.leave(player.roomId);
-                    room.players = room.players.filter(p => p !== socket.id);
-                    const leader = this.players.find(player => player.id === room.host);
-                    const playersUpdate = {
-                        name: [],
-                        piece: {
-                            current: {
-                                position: [],
-                                content: [],
-                            },
-                            next: [],
-                            hold: [],
-                        },
-                        grid: [],
-                    };
-                    for (const playerId of room.players) {
-                        const player = this.players.find(p => p.id === playerId);
-                        if (player) {
-                            const { name, currentPosition, currentPiece, nextPiece, holdPiece, id, grid } = player;
-                            playersUpdate.name.push(name);
-                            playersUpdate.piece.current.position.push(currentPosition);
-                            playersUpdate.piece.current.content.push(currentPiece);
-                            playersUpdate.piece.next.push(nextPiece);
-                            playersUpdate.piece.hold.push(holdPiece);
-                            playersUpdate.grid.push((id === socket.id || room.mode === 'Expert') ? grid : player.calculateSpectrum());
-                        }
-                    }
-                    this.io.to(room.id).emit('tetris:room:updated', { leader: leader.name, players: playersUpdate });
-
-                    console.log(`${socket.id} left room ${player.roomId}`);
-                }
-            }
-        }
-        this.players.splice(this.players.findIndex(player => player.id === socket.id), 1);
-        console.log(`${socket.id} disconnected`);
+        this.#players.delete(socket.id);
     }
 
     /**
