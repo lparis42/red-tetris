@@ -3,11 +3,18 @@
 const ROWS = 20;
 const COLS = 10;
 
-class Player {
-    constructor(id) {
-        this.id = id;
-        this.name = id;
-        this.roomId = null;
+class Player
+{
+    #id;
+    #name;
+    #room;
+
+    constructor(id)
+    {
+        this.#id = id;
+        this.#name = null;
+        this.#room = null;
+
         this.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
         this.currentPiece = null;
         this.currentPosition = null;
@@ -31,6 +38,29 @@ class Player {
     {
         return (/^(?:\w){3,16}$/.test(name));
     }
+
+    isInRoom(room = undefined)
+    {
+        if ( ! room || ! this.room )
+        {
+            return ( !! this.room );
+        }
+
+        return ( this.room.id === room.id );
+    }
+
+    joinRoom(room)
+    {
+        // Should never happen
+        if ( this.#room )
+        {
+            room.removePlayer(this);
+        }
+
+        this.#room = room;
+        room.addPlayer(this);
+    }
+
 
     isPieceCanMove() {
         // Logique pour vérifier le déplacement de la pièce

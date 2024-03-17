@@ -1,16 +1,60 @@
 // Room.js
+const Crypto = require('node:crypto');
 
-class Room {
-    constructor(host, mode) {
-        this.host = host;
+const Modes = Object.freeze([ 'standard', 'expert' ]);
+
+class Room
+{
+    #id;
+    #mode;
+    #leader;
+    #players;
+
+    constructor(leader, mode)
+    {
+        this.#id = Crypto.randomUUID();
+        this.#mode = mode;
+        this.#leader = leader;
+        this.#players = new Set();
+
         this.players = [host];
         this.pieces = [];
         this.positions = [];
-        this.mode = mode;
     }
 
-    addPlayer(playerId) {
-        this.players.push(playerId);
+    static isValidMode(mode)
+    {
+        return ( Modes.includes(mode) );
+    }
+
+    get id()
+    {
+        return this.#id;
+    }
+
+    getLeader()
+    {
+        return this.#leader;
+    }
+
+    getPlayers()
+    {
+        return Object.freeze([ ...this.#players ]);
+    }
+
+    isEmpty()
+    {
+        return ( this.#players.size === 0 );
+    }
+
+    isFull()
+    {
+        return ( this.#players.size >= 9 );
+    }
+
+    addPlayer(player)
+    {
+        this.#players.add(player);
     }
 
     removePlayer(playerId) {
