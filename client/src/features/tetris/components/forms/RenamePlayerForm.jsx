@@ -32,14 +32,9 @@ export default function RenamePlayerForm(
 
 		const form = new FormData(event.currentTarget);
 
-		socket.emit('tetris:player:rename', { name: form.get('player_name') }, (err, res) =>
+		socket.emit('tetris:player:rename', { name: form.get('player_name') }, (res) =>
 		{
-			if ( err )
-			{
-				return console.log(`SocketIO:Error: `, err);
-			}
-
-			const { error, name } = res;
+			const { name, error } = res ?? {};
 
 			if ( error )
 			{

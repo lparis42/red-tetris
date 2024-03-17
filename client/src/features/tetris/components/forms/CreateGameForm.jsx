@@ -18,14 +18,9 @@ export default function CreateGameForm()
 
 		const form = new FormData(event.currentTarget);
 
-		socket.emit('tetris:room:create', { mode: form.get('game_mode') }, (err, res) =>
+		socket.emit('tetris:room:create', { mode: form.get('game_mode') }, (res) =>
 		{
-			if ( err )
-			{
-				return console.log(`SocketIO:Error: `, err);
-			}
-
-			const { error } = res;
+			const { error } = res ?? {};
 
 			if ( error )
 			{

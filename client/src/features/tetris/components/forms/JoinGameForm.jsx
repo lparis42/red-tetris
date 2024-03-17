@@ -29,14 +29,9 @@ export default function JoinGameForm(
 
 		const form = new FormData(event.currentTarget);
 
-		socket.emit('tetris:room:join', { id: form.get('game_id') }, (err, res) =>
+		socket.emit('tetris:room:join', { id: form.get('game_id') }, (res) =>
 		{
-			if ( err )
-			{
-				return console.log(`SocketIO:Error: `, err);
-			}
-
-			const { error } = res;
+			const { error } = res ?? {};
 
 			if ( error )
 			{

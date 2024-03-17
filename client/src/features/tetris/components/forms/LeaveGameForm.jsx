@@ -15,19 +15,16 @@ export default function LeaveGameForm()
 	{
 		event.preventDefault();
 
-		socket.emit('tetris:room:leave', (err, res) =>
+		socket.emit('tetris:room:leave', (res) =>
 		{
-			if ( err )
+			const { id, error } = res ?? {};
+
+			if ( error )
 			{
-				return console.log(`SocketIO:Error: `, err);
+				return ; // Todo: Toast ?
 			}
 
-			const { error } = res;
-
-			if ( ! error )
-			{
-				dispatch(leaveGame());
-			}
+			dispatch(leaveGame({ id }));
 		});
 	}
 

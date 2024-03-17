@@ -15,7 +15,7 @@ export default function Lobby()
 	const store = useSelector(SelectTetris);
 	const dispatch = useDispatch();
 
-	const isGameLeader = ( store.game.leader.id === store.player.id );
+	const isGameLeader = ( store.game.leader.name === store.player.name );
 
 	useEffect(() =>
 	{
@@ -34,8 +34,9 @@ export default function Lobby()
 					{ title: `Game`, span: `2` },
 				] }
 				rows={ [
+					[ `ID`, store.game.id ],
 					[ `Mode`, store.game.mode ],
-					[ `Leader`, store.game.leader ],
+					[ `Leader`, store.game.leader.name ],
 				] }
 			/>
 
@@ -46,7 +47,7 @@ export default function Lobby()
 				rows={
 					store.game.players.map(({ name }) =>
 					{
-						if ( isGameLeader )
+						if ( isGameLeader && name !== store.player.name )
 						{
 							return [ name, <KickPlayerForm player={ { name } } /> ];
 						}

@@ -37,7 +37,7 @@ export default function Grid(
 			{ grid.map((row, row_idx) =>
 				<div key={ row_idx } className={ `tetris-grid__row` }>
 					{ row.map((cell, col_idx) =>
-						<div key={ col_idx } className={ `tetris-grid__cell bg-${ CellColor[cell] }` } />
+						<div key={ col_idx } className={ `tetris-grid__cell bg-${ CellColor[cell] ?? 'unknown' }` } />
 					)}
 				</div>
 			)}

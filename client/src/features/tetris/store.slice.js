@@ -10,7 +10,9 @@ const initialState =
 		id: undefined,
 		mode: undefined,
 		active: false,
-		leader: undefined,
+		leader: {
+			name: undefined,
+		},
 		players: [
 			// {
 			// 	name: `John`,
@@ -68,9 +70,7 @@ const slice = createSlice(
 			updatePlayer: (state, { payload }) => {
 				const { name } = payload;
 
-				if (name) {
-					state.player.name = name;
-				}
+				state.player.name = name;
 			},
 			updateGame: (state, { payload }) => {
 				const { id, mode, active, leader } = payload;
@@ -88,18 +88,16 @@ const slice = createSlice(
 				}
 
 				if (leader) {
-					state.game.leader = leader;
+					state.game.leader.name = leader;
 				}
 			},
 			updatePlayers: (state, { payload }) => {
 				const { players } = payload;
 
-				// Si state.game.players est vide, la liste reste toujours vide (?)
 				state.game.players = players.map((player) => {
 					const data = state.game.players.find((p) => p.name === player.name);
 
 					if (data) {
-						player.name = data.name;
 						player.piece = data.piece;
 						player.grid = data.grid;
 					}
@@ -156,8 +154,11 @@ const slice = createSlice(
 
 				player.grid = grid;
 			},
-			leaveGame: (state) => {
-				state.game = initialState.game;
+			leaveGame: (state, { id }) => {
+				if ( state.game.id === id )
+				{
+					state.game = initialState.game;
+				}
 			},
 		},
 	});

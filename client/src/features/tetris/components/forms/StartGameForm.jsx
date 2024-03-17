@@ -14,7 +14,15 @@ export default function StartGameForm(
 	{
 		event.preventDefault();
 
-		socket.emit('tetris:game:start');
+		socket.emit('tetris:game:start', (res) =>
+		{
+			const { error } = res ?? {};
+
+			if ( error )
+			{
+				return ; // Todo: Toast ?
+			}
+		});
 	}
 
 	return (

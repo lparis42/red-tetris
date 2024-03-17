@@ -28,25 +28,18 @@ export default function Tetris(
 			dispatch(updatePlayers({ players }));
 		};
 
-		const onConnect = () =>
+		const onRoomKick = ({ id }) =>
 		{
-			dispatch(updatePlayer({ id: socket.id }));
-		}
+			dispatch(leaveGame(id)); // Todo: Notify what happened (toast)
+		};
 
-		const onRoomLeave = () =>
-		{
-			dispatch(leaveGame());
-		}
-
-		socket.on('connect', onConnect);
 		socket.on('tetris:room:updated', onRoomUpdated);
-		socket.on('tetris:room:leave', onRoomLeave);
+		socket.on('tetris:room:kicked', onRoomKick);
 
 		socket.onAny((event, ...args) => { console.log(`Socket:onAny:${event}:`, ...args); }) // Todo: Remove
 
 		return () =>
 		{
-			socket.off('connect');
 			socket.off('tetris:room:updated');
 			socket.off('tetris:room:leave');
 
