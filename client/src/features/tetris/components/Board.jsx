@@ -11,15 +11,23 @@ export default function Board(
 	// Add current piece
 	const gridWithPiece = useMemo(() =>
 	{
+		if ( ! grid )
+		{
+			return null;
+		}
+
 		const gridWithPiece = grid.map((row) => [ ...row ]);
 
-		for ( let i = 0 ; i < piece.current.content.length ; i++ )
+		if ( piece.current )
 		{
-			for ( let j = 0 ; j < piece.current.content[0].length ; j++ )
+			for ( let i = 0 ; i < piece.current.content.length ; i++ )
 			{
-				if ( piece.current.content[i][j] !== '0' )
+				for ( let j = 0 ; j < piece.current.content[0].length ; j++ )
 				{
-					gridWithPiece[piece.current.position.y + j][piece.current.position.x + i] = piece.current.content[i][j];
+					if ( piece.current.content[i][j] !== '0' )
+					{
+						gridWithPiece[piece.current.position.y + j][piece.current.position.x + i] = piece.current.content[i][j];
+					}
 				}
 			}
 		}
@@ -33,13 +41,19 @@ export default function Board(
 				<div>
 					Next
 					<div className={ `tetris-sidebar__preview` }>
-						<Grid grid={ piece.next }/>
+						{ ( piece?.next )
+							? <Grid grid={ piece.next } />
+							: "?"
+						}
 					</div>
 				</div>
 				<div>
 					Hold
 					<div className={ `tetris-sidebar__preview` }>
-						<Grid grid={ piece.hold }/>
+						{ ( piece?.hold )
+							? <Grid grid={ piece.hold } />
+							: "?"
+						}
 					</div>
 				</div>
 				<div>
@@ -49,7 +63,10 @@ export default function Board(
 				<span className={ `tetris-sidebar__player` }>{ name }</span>
 			</div>
 			<div className={ `tetris-board__grid` }>
-				<Grid grid={ gridWithPiece } />
+				{ ( gridWithPiece )
+					? <Grid grid={ gridWithPiece } />
+					: "Loading..."
+				}
 			</div>
 		</div>
 	);

@@ -28,17 +28,11 @@ export default function Tetris(
 			dispatch(updatePlayers({ players }));
 		};
 
-		const onConnect = () =>
-		{
-			dispatch(updatePlayer({ id: socket.id }));
-		}
-
 		const onRoomLeave = () =>
 		{
 			dispatch(leaveGame());
 		}
 
-		socket.on('connect', onConnect);
 		socket.on('tetris:room:updated', onRoomUpdated);
 		socket.on('tetris:room:leave', onRoomLeave);
 
@@ -46,7 +40,6 @@ export default function Tetris(
 
 		return () =>
 		{
-			socket.off('connect');
 			socket.off('tetris:room:updated');
 			socket.off('tetris:room:leave');
 

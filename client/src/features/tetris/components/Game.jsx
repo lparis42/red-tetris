@@ -74,7 +74,7 @@ export default function Game()
 
 	const { leftPlayers, rightPlayers } = useMemo(() =>
 	{
-		const players = store.game.players.filter((player) => player.id !== store.player.id);
+		const players = store.game.players.filter((player) => player.name !== store.player.name);
 
 		return {
 			leftPlayers: players.slice(0, playersCountSplit),
@@ -90,15 +90,15 @@ export default function Game()
 			<div className={ `tetris-game__content` }>
 				<div style={{ '--cols': cols, '--rows': rows }} className={ `tetris-game__specters` } >
 					{ leftPlayers.map((player) =>
-						<Board key={ player.id } player={ player } />
+						<Board key={ player.name } player={ player } />
 					)}
 				</div>
 
-				<Board player={ store.game.players.find((player) => player.id === store.player.id) } />
+				<Board player={ store.game.players.find((player) => player.name === store.player.name) } />
 
 				<div  style={{ '--cols': cols, '--rows': rows }} className={ `tetris-game__specters` }>
 					{ rightPlayers.map((player) =>
-						<Board key={ player.id } player={ player } />
+						<Board key={ player.name } player={ player } />
 					)}
 				</div>
 			</div>
