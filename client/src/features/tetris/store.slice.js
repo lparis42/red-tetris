@@ -4,13 +4,13 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState =
 {
 	player: {
-		name: undefined,
+		name: null,
 	},
 	game: {
-		id: undefined,
-		mode: undefined,
+		id: null,
+		mode: null,
 		active: false,
-		leader: undefined,
+		leader: null,
 		players: [
 			// {
 			// 	name: `John`,
@@ -93,26 +93,45 @@ const slice = createSlice(
 			},
 			updatePlayers: (state, { payload }) => {
 				const { players } = payload;
-				
-				state.game.players = players;
-			},
-			updatePiece: (state, { payload }) => {
-				const { id, current, next, hold } = payload;
 
-				const player = state.game.players.find((player) => player.id === id);
+				state.game.players = players.map((playerName) => {
+					const existingPlayer = state.game.players.find(player => player.name === playerName);
+					if (existingPlayer) {
+						return { ...existingPlayer };
+					} else {
+						return {
+							name: playerName,
+							piece: {
+								current: {
+									position: null,
+									content: null,
+								},
+								next: null,
+								hold: null,
+							},
+							grid: null
+						};
+					}
+				});
+			},
+			
+			updatePiece: (state, { payload }) => {
+				const { name, current, next, hold } = payload;
+
+				const player = state.game.players.find((player) => player.name === name);
 
 				if (!player) {
-					return console.log(`Player not found.`);
+					return console.log(`updatePiece: Player not found.`);
 				}
 
 				if (!player.piece) {
 					player.piece = {
 						current: {
-							position: { x: undefined, y: undefined },
-							content: [],
+							position: null,
+							content: null,
 						},
-						next: [],
-						hold: [],
+						next: null,
+						hold: null,
 					};
 				}
 
@@ -136,11 +155,14 @@ const slice = createSlice(
 					player.piece.hold = hold;
 				}
 			},
-			updateGrid: (state, { id, grid }) => {
-				const player = state.game.players.find((player) => player.id === id);
+			updateGrid: (state, { payload }) => {
+				
+				const { name, grid } = payload;
+
+				const player = state.game.players.find((player) => player.name === name);
 
 				if (!player) {
-					return console.log(`Player not found.`);
+					return console.log(`updateGrid: Player not found.`);
 				}
 
 				player.grid = grid;

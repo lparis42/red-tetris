@@ -44,9 +44,9 @@ class GameManager {
 
     // Fonction pour gérer le renvoi de l'hôte de la salle
     handleHostKick(room, player) {
+
         // Si d'autres joueurs sont présents
         if (room.players.length > 1) {
-            // Appeler la fonction pour gérer le renvoi du joueur hôte
             this.handlePlayerKick(room, player);
 
             // Définir le nouvel hôte
@@ -54,7 +54,6 @@ class GameManager {
             room.host = newHostId;
         } else {
             const roomId = player.roomId;
-            // Appeler la fonction pour gérer le renvoi du joueur hôte
             this.handlePlayerKick(room, player);
 
             // Supprimer la salle si aucun joueur n'est présent
@@ -65,50 +64,20 @@ class GameManager {
 
     // Fonction pour gérer le renvoi d'un joueur
     handlePlayerKick(room, player) {
-        // Vérifier si le socket du joueur à renvoyer existe
+
+        // Retirer de la salle
         const socket = this.io.sockets.sockets.get(player.id);
         if (socket) {
-            // Retirer le joueur de la salle
-            socket.leave(room.id);
+            socket.leave(player.roomId);
         }
-
         const playerIndex = room.players.indexOf(player.id);
         if (playerIndex !== -1) {
             room.players.splice(playerIndex, 1);
         }
-
-        // Nettoyer le timer du joueur à renvoyer
-        player.resetInterval.clear();
-
         console.log(`${player.id} kicked from room ${player.roomId}`);
 
-        player.roomId = null;
-    }
-
-
-    // Fonction pour mettre à jour les joueurs restants dans la salle
-    updatePlayersInRoom(room, socket) {
-        const playersUpdate = [];
-        for (const playerId of room.players) {
-            const player = this.players.find(p => p.id === playerId);
-            if (player) {
-                const { name, currentPosition, currentPiece, nextPiece, holdPiece, id, grid } = player;
-                const playerUpdate = {
-                    name: name,
-                    piece: {
-                        current: {
-                            position: (id === socket.id || room.mode === 'Expert') ? currentPosition : null,
-                            content: (id === socket.id || room.mode === 'Expert') ? currentPiece : null,
-                        },
-                        next: (id === socket.id || room.mode === 'Expert') ? nextPiece : null,
-                        hold: (id === socket.id || room.mode === 'Expert') ? holdPiece : null,
-                    },
-                    grid: (id === socket.id || room.mode === 'Expert') ? grid : player.calculateSpectrum()
-                };
-                playersUpdate.push(playerUpdate);
-            }
-        }
-        return playersUpdate;
+        // Remise à zéro
+        player.reset();
     }
 
     handleRoomCreate(socket, payload, cb) {
@@ -132,11 +101,8 @@ class GameManager {
 
         socket.emit('tetris:room:joined', { id: roomId, mode: mode, active: false, leader: player.name });
 
-        // Mettre à jour les joueurs restants dans la salle
-        const playersUpdate = this.updatePlayersInRoom(room, socket);
-
-        // Émettre un événement pour mettre à jour la salle
-        socket.emit('tetris:room:updated', { leader: player.name, players: playersUpdate });
+        const playerNames = room.players.map(playerId => this.players.find(player => player.id === playerId).name);
+        socket.emit('tetris:room:updated', { leader: player.name, players: playerNames });
 
         console.log(`${socket.id} created room ${roomId}`);
     }
@@ -160,16 +126,14 @@ class GameManager {
         const leader = this.players.find(player => player.id === room.host);
         socket.emit('tetris:room:joined', { id: id, mode: room.mode, active: false, leader: leader.name });
 
-        // Mettre à jour les joueurs restants dans la salle
-        const playersUpdate = this.updatePlayersInRoom(room, socket);
-
-        // Émettre un événement pour mettre à jour la salle
-        this.io.to(id).emit('tetris:room:updated', { leader: leader.name, players: playersUpdate });
+        const playerNames = room.players.map(playerId => this.players.find(player => player.id === playerId).name);
+        this.io.to(id).emit('tetris:room:updated', { leader: leader.name, players: playerNames });
 
         console.log(`${socket.id} joined room ${id}`);
     }
 
     handleRoomLeave(socket, cb) {
+        // Erreurs
         const player = this.players.find(player => player.id === socket.id);
         if (this.checkCondition(!player, `Player not found`, socket, cb)) return;
         if (this.checkCondition(!player.roomId, `You are not in any room`, socket, cb)) return;
@@ -178,24 +142,19 @@ class GameManager {
         const index = room.players.indexOf(socket.id);
         if (this.checkCondition(index === -1, `You are not in room ${player.roomId}`, socket, cb)) return;
 
+        // Kick
         if (socket.id === room.host) {
             this.handleHostKick(room, player);
         } else {
             this.handlePlayerKick(room, player);
         }
 
-        // Trouver le leader de la salle
-        const leader = this.players.find(player => player.id === room.host);
-
-        // Mettre à jour les joueurs restants dans la salle
-        const playersUpdate = this.updatePlayersInRoom(room, socket);
-
-        // Émettre un événement pour mettre à jour la salle
-        this.io.to(leader.roomId).emit('tetris:room:updated', { leader: leader.name, players: playersUpdate });
-
+        // Retours
         cb(null, { error: null });
-
         socket.emit('tetris:room:leave');
+        const leader = this.players.find(player => player.id === room.host);
+        const playerNames = room.players.map(playerId => this.players.find(player => player.id === playerId).name);
+        this.io.to(leader.roomId).emit('tetris:room:updated', { leader: leader.name, players: playerNames });
     }
 
     updateIntervalFall(socket, player, room, level, timer) {
@@ -254,11 +213,33 @@ class GameManager {
         // Trouver le leader de la salle
         const leader = this.players.find(player => player.id === room.host);
 
-        // Mettre à jour les joueurs restants dans la salle
-        const playersUpdate = this.updatePlayersInRoom(room, socket);
+        // Émet l'événement 'tetris:game:updated' à tous les autres sockets de la room
+        room.players.forEach(playerId => {
+            const clientSocket = this.io.sockets.sockets.get(playerId);
+            if (clientSocket) {
+                const isCurrentSocketExpert = room.mode === 'Expert' || clientSocket.id === socket.id;
+                const data = [
+                    {
+                        name: player.name,
+                        current: {
+                            position: isCurrentSocketExpert ? { x: player.currentPosition.col, y: player.currentPosition.row } : null,
+                            content: isCurrentSocketExpert ? player.currentPiece.shape : null
+                        },
+                        next: isCurrentSocketExpert ? player.nextPiece.shape : null,
+                        hold: player.holdPiece && isCurrentSocketExpert ? player.holdPiece.shape : null
+                    },
+                    {
+                        name: player.name,
+                        grid: isCurrentSocketExpert ? player.grid : player.calculateSpectrum()
+                    }
+                ];
+                clientSocket.emit('tetris:game:updated', { piece: data[0], grid: data[1] });
+            } else {
+                console.log(`Socket not found for player ID: ${playerId}`);
+            }
+        });
 
-        // Émettre un événement pour mettre à jour la salle
-        this.io.to(leader.roomId).emit('tetris:room:updated', { leader: leader.name, players: playersUpdate });
+
     };
 
     handleRoomGameStart(socket, cb) {
@@ -276,6 +257,10 @@ class GameManager {
         const position = new Position(piece.shape);
         room.addPiece(piece, position);
 
+        const pieceN = new Piece();
+        const positionN = new Position(pieceN.shape);
+        room.addPiece(pieceN, positionN);
+
         const roomPlayers = this.players.filter(player => room.players.includes(player.id));
 
         // Trouver le leader de la salle
@@ -286,6 +271,8 @@ class GameManager {
             player.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
             player.currentPiece = Object.create(room.pieces[0]);
             player.currentPosition = Object.create(room.positions[0]);
+            player.nextPiece = Object.create(room.pieces[1]);
+
             player.addPieceToGrid();
 
             const playerSocket = this.io.sockets.sockets.get(player.id);
@@ -294,11 +281,37 @@ class GameManager {
                 this.updateIntervalFall(playerSocket, player, room, 0, 800);
             }, 800);
 
-            // Mettre à jour les joueurs restants dans la salle
-            const playersUpdate = this.updatePlayersInRoom(room, playerSocket);
+            this.rooms[player.roomId].players.forEach(playerId => {
+                const clientSocket = this.io.sockets.sockets.get(playerId);
+                if (clientSocket) {
+                    const isCurrentSocketExpert = room.mode === 'Expert' || clientSocket.id === player.id;
+                    const data = [
+                        {
+                            name: player.name,
+                            current: {
+                                position: isCurrentSocketExpert ? { x: player.currentPosition.col, y: player.currentPosition.row } : null,
+                                content: isCurrentSocketExpert ? player.currentPiece.shape : null
+                            },
+                            next: isCurrentSocketExpert ? player.nextPiece.shape : null,
+                            hold: player.holdPiece && isCurrentSocketExpert ? player.holdPiece.shape : null
+                        },
+                        {
+                            name: player.name,
+                            grid: isCurrentSocketExpert ? player.grid : player.calculateSpectrum()
+                        }
+                    ];
+                    console.log("Player Name:", player.name);
+                    console.log("Current Position:", isCurrentSocketExpert ? player.currentPosition : null);
+                    console.log("Current Piece:", isCurrentSocketExpert ? player.currentPiece.shape : null);
+                    console.log("Next Piece:", isCurrentSocketExpert ? player.nextPiece.shape : null);
+                    console.log("Grid:", isCurrentSocketExpert ? player.grid : player.calculateSpectrum());
 
-            // Émettre un événement pour mettre à jour la salle
-            playerSocket.emit('tetris:room:updated', { leader: leader.name, players: playersUpdate });
+
+                    clientSocket.emit('tetris:game:updated', [data[0], data[1]]);
+                } else {
+                    console.log(`Socket not found for player ID: ${playerId}`);
+                }
+            });
         });
 
         this.io.to(player.roomId).emit("tetris:game:started");
@@ -363,11 +376,8 @@ class GameManager {
         // Trouver le leader de la salle
         const leader = this.players.find(player => player.id === room.host);
 
-        // Mettre à jour les joueurs restants dans la salle
-        const playersUpdate = this.updatePlayersInRoom(room, socket);
-
-        // Émettre un événement pour mettre à jour la salle
-        this.io.to(leader.roomId).emit('tetris:room:updated', { leader: leader.name, players: playersUpdate });
+        const playerNames = room.players.map(playerId => this.players.find(player => player.id === playerId).name);
+        this.io.to(leader.roomId).emit('tetris:room:updated', { leader: leader.name, players: playerNames });
     }
 
     handlePlayerRename(socket, payload, cb) {
@@ -446,11 +456,8 @@ class GameManager {
         // Trouver le leader de la salle
         const leader = this.players.find(player => player.id === room.host);
 
-        // Mettre à jour les joueurs restants dans la salle
-        const playersUpdate = this.updatePlayersInRoom(room, socket);
-
-        // Émettre un événement pour mettre à jour la salle
-        this.io.to(leader.roomId).emit('tetris:room:updated', { leader: leader.name, players: playersUpdate });
+        const playerNames = room.players.map(playerId => this.players.find(player => player.id === playerId).name);
+        this.io.to(leader.roomId).emit('tetris:room:updated', { leader: leader.name, players: playerNames });
     }
 
     handleDisconnect(socket) {
@@ -473,11 +480,8 @@ class GameManager {
             // Trouver le leader de la salle
             const leader = this.players.find(player => player.id === room.host);
 
-            // Mettre à jour les joueurs restants dans la salle
-            const playersUpdate = this.updatePlayersInRoom(room, socket);
-
-            // Émettre un événement pour mettre à jour la salle
-            this.io.to(leader.roomId).emit('tetris:room:updated', { leader: leader.name, players: playersUpdate });
+            const playerNames = room.players.map(playerId => this.players.find(player => player.id === playerId).name);
+            this.io.to(leader.roomId).emit('tetris:room:updated', { leader: leader.name, players: playerNames });
         }
 
         this.players.splice(this.players.findIndex(player => player.id === socket.id), 1);

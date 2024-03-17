@@ -35,6 +35,9 @@ export default function Game()
 
 		const onGameUpdated = ({ piece, grid }) =>
 		{
+			console.log(grid);
+			console.log(piece);
+
 			if ( piece )
 			{
 				dispatch(updatePiece(piece));

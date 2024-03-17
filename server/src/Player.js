@@ -8,7 +8,7 @@ class Player {
         this.id = id;
         this.name = id;
         this.roomId = null;
-        this.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        this.grid = null;
         this.currentPiece = null;
         this.currentPosition = null;
         this.nextPiece = null;
@@ -111,15 +111,27 @@ class Player {
         }
     
         return spectrum;
-    }    
+    }
+
+    reset() {
+        this.roomId = null;
+        this.grid = null;
+        this.closeGame();
+    }
+
+    closeGame() {
+        this.currentPiece = null;
+        this.currentPosition = null;
+        this.nextPiece = null;
+        this.holdPiece = null;
+        this.penalty = 0;
+        this.game = false;
+        this.resetInterval.clear();
+    }
 
     isGameEnd() {
         for (let col = 0; col < COLS; col++) {
             if (this.grid[0][col]) {
-                this.game = false;
-                this.currentPiece = null;
-                this.currentPosition = null;
-                this.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
                 this.resetInterval.clear();
                 return true;
             }
