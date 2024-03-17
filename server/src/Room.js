@@ -57,10 +57,20 @@ class Room
         this.#players.add(player);
     }
 
-    removePlayer(playerId) {
-        const index = this.players.indexOf(playerId);
-        if (index !== -1) {
-            this.players.splice(index, 1);
+    removePlayer(player)
+    {
+        this.#players.delete(player);
+
+        if ( ! player.isRoomLeader(this) )
+        {
+            return ;
+        }
+
+        this.#leader = null;
+
+        if ( ! this.isEmpty() )
+        {
+            this.#leader = this.#players.values().next().value;
         }
     }
 

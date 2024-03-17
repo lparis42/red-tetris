@@ -39,26 +39,66 @@ class Player
         return (/^(?:\w){3,16}$/.test(name));
     }
 
+    get id()
+    {
+        return this.#id;
+    }
+
+    get name()
+    {
+        return this.#name;
+    }
+
+    getRoom()
+    {
+        return this.#room;
+    }
+
     isInRoom(room = undefined)
     {
-        if ( ! room || ! this.room )
+        if ( ! room || ! this.#room )
         {
-            return ( !! this.room );
+            return ( !! this.#room );
         }
 
-        return ( this.room.id === room.id );
+        return ( this.#room.id === room.id );
+    }
+
+    isRoomLeader(room)
+    {
+        return ( room.getLeader() === this );
     }
 
     joinRoom(room)
     {
-        // Should never happen
-        if ( this.#room )
+        if ( this.isInRoom(room) )
         {
-            room.removePlayer(this);
+            return ;
+        }
+
+        // Should never happen
+        if ( this.isInRoom() )
+        {
+            this.leaveRoom(this.#room);
         }
 
         this.#room = room;
         room.addPlayer(this);
+    }
+
+    leaveRoom(room)
+    {
+        if ( ! this.isInRoom(room) )
+        {
+            return ;
+        }
+
+        // Todo: Move Game/Board management (grid, pieces, timers, ...) to it's own class
+        // Note: Should also reset grid, pieces, ....
+        this.resetInterval.clear();
+
+        this.#room = null;
+        room.removePlayer(this);
     }
 
 
