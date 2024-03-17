@@ -30,7 +30,7 @@ export default function Tetris(
 
 		const onRoomKick = ({ id }) =>
 		{
-			dispatch(leaveGame(id)); // Todo: Notify what happened (toast)
+			dispatch(leaveGame({ id })); // Todo: Notify what happened (toast)
 		};
 
 		socket.on('tetris:room:updated', onRoomUpdated);

@@ -36,7 +36,7 @@ class Player
 
     static isValidName(name)
     {
-        return (/^(?:\w){3,16}$/.test(name));
+        return ( /^(?:\w){3,16}$/.test(name) );
     }
 
     get id()
@@ -47,6 +47,12 @@ class Player
     get name()
     {
         return this.#name;
+    }
+
+    setName(name)
+    {
+        this.#name = name;
+        return this;
     }
 
     getRoom()

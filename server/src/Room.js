@@ -17,7 +17,6 @@ class Room
         this.#leader = leader;
         this.#players = new Set();
 
-        this.players = [host];
         this.pieces = [];
         this.positions = [];
     }
@@ -30,6 +29,11 @@ class Room
     get id()
     {
         return this.#id;
+    }
+
+    get mode()
+    {
+        return this.#mode;
     }
 
     getLeader()
@@ -50,6 +54,12 @@ class Room
     isFull()
     {
         return ( this.#players.size >= 9 );
+    }
+
+    isGameRunning()
+    {
+        // Todo: Modify
+        return this.getPlayers().some((player) => player.isGameStart);
     }
 
     addPlayer(player)

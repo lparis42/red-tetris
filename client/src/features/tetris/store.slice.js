@@ -145,7 +145,9 @@ const slice = createSlice(
 					player.piece.hold = hold;
 				}
 			},
-			updateGrid: (state, { id, grid }) => {
+			updateGrid: (state, { payload }) => {
+				const { id, grid } = payload;
+
 				const player = state.game.players.find((player) => player.id === id);
 
 				if (!player) {
@@ -154,7 +156,9 @@ const slice = createSlice(
 
 				player.grid = grid;
 			},
-			leaveGame: (state, { id }) => {
+			leaveGame: (state, { payload }) => {
+				const { id } = payload;
+
 				if ( state.game.id === id )
 				{
 					state.game = initialState.game;

@@ -9,30 +9,28 @@ const COLS = 10;
 
 class GameManager
 {
+    #io;
     #players;
     #rooms;
 
     constructor(io)
     {
+        this.#io = io;
         this.#players = new Map();
         this.#rooms = new Map();
 
-        this.io = io;
-        this.players = [];
-        this.rooms = {};
         this.setupSocketHandlers();
     }
 
     setupSocketHandlers()
     {
-        this.io.on('connection', (socket) =>
+        this.#io.on('connection', (socket) =>
         {
             console.log(`${socket.id} connected`);
 
             const player = new Player(socket.id);
 
             this.#players.set(socket.id, player);
-            this.players.push(player);
 
             socket.on('tetris:player:rename', (payload, cb) => this.handlePlayerRename(socket, payload, cb));
 
@@ -40,22 +38,13 @@ class GameManager
             socket.on('tetris:room:create', (payload, cb) => this.handleRoomCreate(socket, payload, cb));
             socket.on('tetris:room:join',   (payload, cb) => this.handleRoomJoin(socket, payload, cb));
             socket.on('tetris:room:leave',  (         cb) => this.handleRoomLeave(socket, cb));
-            socket.on('tetris:room:kick', (playerId, cb) => this.handleRoomKick(socket, playerId, cb));
+            socket.on('tetris:room:kick',   (payload, cb) => this.handleRoomKick(socket, payload, cb));
 
             socket.on('tetris:game:start', (cb) => this.handleRoomGameStart(socket, cb));
             socket.on('tetris:game:action', (action, cb) => this.handleRoomGameAction(socket, action, cb));
 
             socket.on('disconnect', () => this.handleDisconnect(socket));
         });
-    }
-
-    checkCondition(condition, message, socket, cb) {
-        if (condition) {
-            cb(null, { error: message });
-            console.error(`${socket.id} <!> ${message}`);
-            return true;
-        }
-        return false;
     }
 
     handlePlayerRename(socket, payload, cb)
@@ -109,7 +98,7 @@ class GameManager
         }
 
         // Set Player
-        player.name = name;
+        player.setName(name);
 
         // Response
         if ( typeof cb === 'function' )
@@ -125,7 +114,7 @@ class GameManager
         // Filter Rooms
         const rooms = [];
 
-        // Note: Could limit result length
+        // Note: Could limit result size
         for ( const room of this.#rooms.values() )
         {
             if ( room.id.startsWith(id) )
@@ -253,15 +242,24 @@ class GameManager
             return ;
         }
 
+        // Game is running
+        if ( room.isGameRunning() )
+        {
+            if ( typeof cb === 'function' )
+            {
+                cb({ error: `Can't join room while game is running` });
+            }
+
+            return ;
+        }
+
         // Join Room
         player.joinRoom(room);
 
-        socket.join(room.id); // Note: Could be moved into `joinRoom` if socket was store as property
+        socket.join(room.id);
 
         // Emit
-        const leader = this.#players.get(room.host.id);
-
-        socket.emit('tetris:room:joined', { id: room.id, mode: room.mode, active: false, leader: leader.name });
+        socket.emit('tetris:room:joined', { id: room.id, mode: room.mode, active: room.isGameRunning(), leader: room.getLeader().name });
 
         // Update Room
         this._onRoomUpdated(room);
@@ -304,6 +302,97 @@ class GameManager
 
         // Update Room
         this._onRoomUpdated(room, wasRoomLeader);
+    }
+
+    async handleRoomKick(socket, payload, cb)
+    {
+        const player = this.#players.get(socket.id);
+
+        // Not in a Room
+        if ( ! player.isInRoom() )
+        {
+            if ( typeof cb === 'function' )
+            {
+                cb({ error: `You are not in a room` });
+            }
+
+            return ;
+        }
+
+        const room = player.getRoom();
+
+        if ( ! player.isRoomLeader(room) )
+        {
+            if ( typeof cb === 'function' )
+            {
+                cb({ error: `You must be the room leader to kick someone` });
+            }
+
+            return ;
+        }
+
+        const { name } = payload ?? {};
+
+        if ( ! name )
+        {
+            if ( typeof cb === 'function' )
+            {
+                cb({ error: `Player name is required` });
+            }
+
+            return ;
+        }
+
+        if ( player.name === name )
+        {
+            if ( typeof cb === 'function' )
+            {
+                cb({ error: `You can't kick yourself` });
+            }
+
+            return ;
+        }
+
+        if ( room.isGameRunning() )
+        {
+            if ( typeof cb === 'function' )
+            {
+                cb({ error: `You can't kick someone while game is running` });
+            }
+
+            return ;
+        }
+
+        const target = room.getPlayers().find((p) => p.name === name);
+
+        if ( ! target )
+        {
+            if ( typeof cb === 'function' )
+            {
+                cb({ error: `Player isn't in this room` });
+            }
+
+            return ;
+        }
+
+        target.leaveRoom(room);
+
+        const targetSocket = (await this.#io.in(room.id).fetchSockets()).find(socket => socket.id === target.id);
+
+        targetSocket.leave(room.id);
+        targetSocket.emit('tetris:room:kicked', { id: room.id });
+
+        this._onRoomUpdated(room, false);
+    }
+
+
+    checkCondition(condition, message, socket, cb) {
+        if (condition) {
+            cb(null, { error: message });
+            console.error(`${socket.id} <!> ${message}`);
+            return true;
+        }
+        return false;
     }
 
     updateIntervalFall(playerSocket, player, room, level, timer) {
@@ -492,74 +581,6 @@ class GameManager
         socket.emit('tetris:room:game:update:grid', playerGrid);
     }
 
-    handleRoomKick(socket, playerId, cb) {
-        if (this.checkCondition(!playerId, `Invalid playerId`, playerId, socket, cb)) return;
-
-        const player = this.players.find(player => player.id === socket.id);
-        if (this.checkCondition(!player, `Player not found`, playerId, socket, cb)) return;
-
-        if (this.checkCondition(!player.roomId, `Player is not in any room`, playerId, socket, cb)) return;
-
-        const room = this.rooms[player.roomId];
-        if (this.checkCondition(!room, `Room ${player.roomId} not found`, playerId, socket, cb)) return;
-
-        if (this.checkCondition(player.id !== room.host, `You are not the host of room ${player.roomId}`, playerId, socket, cb)) return;
-
-        const playerIndex = room.players.indexOf(playerId);
-        if (this.checkCondition(playerIndex === -1, `Player ${playerId} is not in room ${player.roomId}`, playerId, socket, cb)) return;
-
-        if (playerId === room.host) {
-            const remainingPlayers = room.players.filter(playerId => playerId !== socket.id);
-            if (remainingPlayers.length > 0) {
-                const newHostId = remainingPlayers[0];
-                room.host = newHostId;
-                const newHostPlayer = this.players.find(player => player.id === newHostId);
-                if (newHostPlayer) {
-                    newHostPlayer.isHost = true;
-                } else {
-                    console.error(`New host player ${newHostId} not found.`);
-                }
-            } else {
-                delete this.rooms[roomId];
-                console.log(`Room ${roomId} closed.`);
-            }
-        } else {
-            const playerSocket = this.io.sockets.sockets.get(playerId);
-            if (this.checkCondition(!playerSocket, `Player to kick not found`, null, socket, cb)) return;
-            playerSocket.leave(player.roomId);
-            playerSocket.emit('tetris:room:kick', playerId);
-            room.players.splice(playerIndex, 1);
-            const leader = this.players.find(player => player.id === room.host);
-            const playersUpdate = {
-                name: [],
-                piece: {
-                    current: {
-                        position: [],
-                        content: [],
-                    },
-                    next: [],
-                    hold: [],
-                },
-                grid: [],
-            };
-            for (const playerId of room.players) {
-                const player = this.players.find(p => p.id === playerId);
-                if (player) {
-                    const { name, currentPosition, currentPiece, nextPiece, holdPiece, id, grid } = player;
-                    playersUpdate.name.push(name);
-                    playersUpdate.piece.current.position.push(currentPosition);
-                    playersUpdate.piece.current.content.push(currentPiece);
-                    playersUpdate.piece.next.push(nextPiece);
-                    playersUpdate.piece.hold.push(holdPiece);
-                    playersUpdate.grid.push((id === socket.id || room.mode === 'Expert') ? grid : player.calculateSpectrum());
-                }
-            }
-            this.io.to(room.id).emit('tetris:room:updated', { leader: leader.name, players: playersUpdate });
-            this.players.find(p => p.id === playerId).roomId = null;
-            console.log(`${playerId} kicked from room ${player.roomId}`);
-        }
-        cb(null, playerId);
-    }
 
     handleDisconnect(socket)
     {
@@ -576,7 +597,7 @@ class GameManager
         const players = room.getPlayers().map(({ name }) => ({ name }));
         const leader = ( hasLeaderChanged ) ? room.getLeader().name : undefined;
 
-        this.io.to(room.id).emit('tetris:room:updated', { leader, players });
+        this.#io.to(room.id).emit('tetris:room:updated', { leader, players });
     }
 }
 
