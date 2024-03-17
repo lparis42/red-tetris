@@ -15,7 +15,7 @@ export default function Lobby()
 	const store = useSelector(SelectTetris);
 	const dispatch = useDispatch();
 
-	const isGameLeader = ( store.game.leader.id === store.player.id );
+	const isGameLeader = ( store.game.leader === store.player.name );
 
 	useEffect(() =>
 	{
@@ -65,7 +65,7 @@ export default function Lobby()
 				rows={
 					store.game.players.map(({ name }) =>
 					{
-						if ( isGameLeader )
+						if ( isGameLeader && store.player.name !== name )
 						{
 							return {
 								key: `player-${name}`,
