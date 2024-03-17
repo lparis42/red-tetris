@@ -94,18 +94,7 @@ const slice = createSlice(
 			updatePlayers: (state, { payload }) => {
 				const { players } = payload;
 				
-				// Si state.game.players est vide, la liste reste toujours vide (?)
-				state.game.players = players.map((player) => {
-					const data = state.game.players.find((p) => p.name === player.name);
-
-					if (data) {
-						player.name = data.name;
-						player.piece = data.piece;
-						player.grid = data.grid;
-					}
-
-					return player;
-				});
+				state.game.players = players;
 			},
 			updatePiece: (state, { payload }) => {
 				const { id, current, next, hold } = payload;

@@ -14,7 +14,7 @@ class Player {
         this.nextPiece = null;
         this.holdPiece = null;
         this.penalty = 0;
-        this.isGameStart = false;
+        this.game = false;
         this.resetInterval = {
             interval: null,
             set(fn, time) {
@@ -116,7 +116,7 @@ class Player {
     isGameEnd() {
         for (let col = 0; col < COLS; col++) {
             if (this.grid[0][col]) {
-                this.isGameStart = false;
+                this.game = false;
                 this.currentPiece = null;
                 this.currentPosition = null;
                 this.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
