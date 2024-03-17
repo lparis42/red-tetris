@@ -469,7 +469,17 @@ class GameManager {
                     this.handlePlayerKick(room, player);
                 }
             }
+
+            // Trouver le leader de la salle
+            const leader = this.players.find(player => player.id === room.host);
+
+            // Mettre à jour les joueurs restants dans la salle
+            const playersUpdate = this.updatePlayersInRoom(room, socket);
+
+            // Émettre un événement pour mettre à jour la salle
+            this.io.to(leader.roomId).emit('tetris:room:updated', { leader: leader.name, players: playersUpdate });
         }
+
         this.players.splice(this.players.findIndex(player => player.id === socket.id), 1);
         console.log(`${socket.id} disconnected`);
     }
