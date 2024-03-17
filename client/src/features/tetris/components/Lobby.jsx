@@ -34,8 +34,27 @@ export default function Lobby()
 					{ title: `Game`, span: `2` },
 				] }
 				rows={ [
-					[ `Mode`, store.game.mode ],
-					[ `Leader`, store.game.leader ],
+					{
+						key: `id`,
+						cells: [
+							{ key: `title`, content: `ID` },
+							{ key: `value`, content: store.game.id },
+						],
+					},
+					{
+						key: `mode`,
+						cells: [
+							{ key: `title`, content: `Mode` },
+							{ key: `value`, content: store.game.mode },
+						],
+					},
+					{
+						key: `leader`,
+						cells: [
+							{ key: `title`, content: `Leader` },
+							{ key: `value`, content: store.game.leader },
+						],
+					},
 				] }
 			/>
 
@@ -48,10 +67,21 @@ export default function Lobby()
 					{
 						if ( isGameLeader )
 						{
-							return [ name, <KickPlayerForm player={ { name } } /> ];
+							return {
+								key: `player-${name}`,
+								cells: [
+									{ key: `name`, content: name },
+									{ key: `action`, content: <KickPlayerForm player={ { name } } /> },
+								],
+							};
 						}
 
-						return [ name ];
+						return {
+							key: `player-${name}`,
+							cells: [
+								{ key: `name`, content: name },
+							],
+						};
 					})
 				}
 			/>

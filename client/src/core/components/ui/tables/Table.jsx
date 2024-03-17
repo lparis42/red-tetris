@@ -14,7 +14,7 @@ export default function Table(
 				{ header &&
 					<tr className={ `table__row` }>
 						{
-							header.map(({ title, span}) =>
+							header.map(({ title, span }) =>
 								<th key={ title } className={ `table__header-cell` } colSpan={ span }>{ title }</th>
 							)
 						}
@@ -25,11 +25,11 @@ export default function Table(
 				condition={ header }
 				wrapper={ (children) => <tbody className={ `table__content` }>{ children }</tbody> }
 			>
-				{ rows.map((row, row_idx) =>
-					<tr key={ row_idx } className={ `table__row` }>
+				{ rows.map(({ key: rkey, cells }) =>
+					<tr key={ rkey } className={ `table__row` }>
 						{
-							row.map((cell, cell_idx) =>
-								<td key={ cell_idx } className={ `table__row-cell` }>{ cell }</td>
+							cells.map(({ key: ckey, content }) =>
+								<td key={ ckey } className={ `table__row-cell` }>{ content }</td>
 							)
 						}
 					</tr>
