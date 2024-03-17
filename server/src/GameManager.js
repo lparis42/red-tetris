@@ -36,13 +36,14 @@ class GameManager
 
             socket.on('tetris:player:rename', (payload, cb) => this.handlePlayerRename(socket, payload, cb));
 
+            socket.on('tetris:room:list',   (payload, cb) => this.handleRoomList(socket, payload, cb));
             socket.on('tetris:room:create', (payload, cb) => this.handleRoomCreate(socket, payload, cb));
             socket.on('tetris:room:join', (payload, cb) => this.handleRoomJoin(socket, payload, cb));
             socket.on('tetris:room:leave', (cb) => this.handleRoomLeave(socket, cb));
+            socket.on('tetris:room:kick', (playerId, cb) => this.handleRoomKick(socket, playerId, cb));
+
             socket.on('tetris:game:start', (cb) => this.handleRoomGameStart(socket, cb));
             socket.on('tetris:game:action', (action, cb) => this.handleRoomGameAction(socket, action, cb));
-            socket.on('tetris:room:list', (roomId, cb) => this.handleRoomList(socket, roomId, cb));
-            socket.on('tetris:room:kick', (playerId, cb) => this.handleRoomKick(socket, playerId, cb));
 
             socket.on('disconnect', () => this.handleDisconnect(socket));
         });
@@ -114,6 +115,29 @@ class GameManager
         if ( typeof cb === 'function' )
         {
             cb({ name });
+        }
+    }
+
+    handleRoomList(socket, payload, cb)
+    {
+        const { id = '' } = payload ?? {};
+
+        // Filter Rooms
+        const rooms = [];
+
+        // Note: Could limit result length
+        for ( const room of this.#rooms.values() )
+        {
+            if ( room.id.startsWith(id) )
+            {
+                rooms.push({ id: room.id, mode: room.mode });
+            }
+        }
+
+        // Response
+        if ( typeof cb === 'function' )
+        {
+            cb({ id, rooms });
         }
     }
 
@@ -457,18 +481,6 @@ class GameManager
             content: player.grid
         };
         socket.emit('tetris:room:game:update:grid', playerGrid);
-    }
-
-    handleRoomList(socket, roomId, cb) {
-        let filteredRooms = Object.values(this.rooms);
-        if (roomId && roomId.trim() !== '') {
-            filteredRooms = filteredRooms.filter(room => room.id.startsWith(roomId));
-        }
-
-        const roomList = filteredRooms.map(room => ({ id: room.id, mode: room.mode }));
-        cb(roomList);
-
-        console.log(`Room list sent to ${socket.id}`);
     }
 
     handleRoomKick(socket, playerId, cb) {
