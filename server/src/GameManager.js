@@ -300,12 +300,6 @@ class GameManager {
                             grid: isCurrentSocketExpert ? player.grid : player.calculateSpectrum()
                         }
                     ];
-                    console.log("Player Name:", player.name);
-                    console.log("Current Position:", isCurrentSocketExpert ? player.currentPosition : null);
-                    console.log("Current Piece:", isCurrentSocketExpert ? player.currentPiece.shape : null);
-                    console.log("Next Piece:", isCurrentSocketExpert ? player.nextPiece.shape : null);
-                    console.log("Grid:", isCurrentSocketExpert ? player.grid : player.calculateSpectrum());
-
 
                     clientSocket.emit('tetris:game:updated', [data[0], data[1]]);
                 } else {
