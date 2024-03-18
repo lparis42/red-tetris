@@ -18,7 +18,7 @@ export default function Board(
 
 		const gridWithPiece = grid.map((row) => [ ...row ]);
 
-		if ( piece.current )
+		if ( piece.current?.content && piece.current.position )
 		{
 			for ( let i = 0 ; i < piece.current.content.length ; i++ )
 			{

@@ -114,7 +114,6 @@ const slice = createSlice(
 					}
 				});
 			},
-			
 			updatePiece: (state, { payload }) => {
 				const { name, current, next, hold } = payload;
 
@@ -156,7 +155,7 @@ const slice = createSlice(
 				}
 			},
 			updateGrid: (state, { payload }) => {
-				
+
 				const { name, grid } = payload;
 
 				const player = state.game.players.find((player) => player.name === name);
