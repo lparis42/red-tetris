@@ -13,6 +13,7 @@ class Player {
         this.currentPosition = null;
         this.nextPiece = null;
         this.holdPiece = null;
+        this.hold = 0;
         this.penalty = 0;
         this.game = false;
         this.resetInterval = {
@@ -124,6 +125,7 @@ class Player {
         this.currentPosition = null;
         this.nextPiece = null;
         this.holdPiece = null;
+        this.hold = 0;
         this.penalty = 0;
         this.game = false;
         this.resetInterval.clear();

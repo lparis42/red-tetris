@@ -158,58 +158,103 @@ class GameManager {
     }
 
     updateIntervalFall(socket, player, room, level, timer) {
-        player.addPenalty();
-        player.currentPosition.row += 1;
 
-        if (!player.isPieceCanMove()) {
-            player.currentPosition.row -= 1;
-            player.addPieceToGrid();
+        if (player.hold === 1) {
+            if (player.holdPiece) {
+                const tempPiece = Object.create(player.currentPiece);
+                player.currentPiece = player.holdPiece;
+                player.holdPiece = tempPiece;
+                player.currentPosition.row = -player.currentPiece.shape.length;
+            } else {
+                player.holdPiece = Object.create(player.currentPiece);
 
-            const penalty = player.removeCompletedLines();
-            if (penalty > 1) {
-                const playersInRoom = this.players.filter(otherPlayer => room.players.includes(otherPlayer.id) && otherPlayer.id !== player.id);
-                playersInRoom.forEach(otherPlayer => {
-                    otherPlayer.penalty += penalty - 1;
-                });
-            }
+                level++;
+                if (!room.pieces[level]) {
+                    const piece = new Piece();
+                    const position = new Position(piece.shape);
+                    room.addPiece(piece, position);
+                }
+                if (!room.pieces[level + 1]) {
+                    const piece = new Piece();
+                    const position = new Position(piece.shape);
+                    room.addPiece(piece, position);
+                }
+                player.currentPiece = Object.create(room.pieces[level]);
+                player.currentPosition = Object.create(room.positions[level]);
+                player.nextPiece = Object.create(room.pieces[level + 1]);
 
-            if (player.isGameEnd()) {
-                socket.emit('tetris:game:ended');
-                return;
+                if (level >= 0 && level <= 9) {
+                    timer = 800;
+                } else if (level >= 10 && level <= 19) {
+                    timer = 700;
+                } else if (level >= 20 && level <= 29) {
+                    timer = 600;
+                } else if (level >= 30 && level <= 39) {
+                    timer = 500;
+                } else if (level >= 40 && level <= 49) {
+                    timer = 400;
+                }
+                player.resetInterval.clear();
+                player.resetInterval.set(() => {
+                    this.updateIntervalFall(socket, player, room, level, timer);
+                }, timer);
             }
+            player.hold = 2;
+        } else {
 
-            level += 1;
-            if (!room.pieces[level]) {
-                const piece = new Piece();
-                const position = new Position(piece.shape);
-                room.addPiece(piece, position);
-            }
-            if (!room.pieces[level + 1]) {
-                const piece = new Piece();
-                const position = new Position(piece.shape);
-                room.addPiece(piece, position);
-            }
-            player.currentPiece = Object.create(room.pieces[level]);
-            player.currentPosition = Object.create(room.positions[level]);
-            player.nextPiece = Object.create(room.pieces[level + 1]);
+            player.addPenalty();
+            player.currentPosition.row += 1;
 
-            if (level >= 0 && level <= 9) {
-                timer = 800;
-            } else if (level >= 10 && level <= 19) {
-                timer = 700;
-            } else if (level >= 20 && level <= 29) {
-                timer = 600;
-            } else if (level >= 30 && level <= 39) {
-                timer = 500;
-            } else if (level >= 40 && level <= 49) {
-                timer = 400;
+            if (!player.isPieceCanMove()) {
+                player.currentPosition.row -= 1;
+                player.addPieceToGrid();
+
+                const penalty = player.removeCompletedLines();
+                if (penalty > 1) {
+                    const playersInRoom = this.players.filter(otherPlayer => room.players.includes(otherPlayer.id) && otherPlayer.id !== player.id);
+                    playersInRoom.forEach(otherPlayer => {
+                        otherPlayer.penalty += penalty - 1;
+                    });
+                }
+
+                if (player.isGameEnd()) {
+                    socket.emit('tetris:game:ended');
+                    return;
+                }
+
+                level += 1;
+                if (!room.pieces[level]) {
+                    const piece = new Piece();
+                    const position = new Position(piece.shape);
+                    room.addPiece(piece, position);
+                }
+                if (!room.pieces[level + 1]) {
+                    const piece = new Piece();
+                    const position = new Position(piece.shape);
+                    room.addPiece(piece, position);
+                }
+                player.currentPiece = Object.create(room.pieces[level]);
+                player.currentPosition = Object.create(room.positions[level]);
+                player.nextPiece = Object.create(room.pieces[level + 1]);
+
+                if (level >= 0 && level <= 9) {
+                    timer = 800;
+                } else if (level >= 10 && level <= 19) {
+                    timer = 700;
+                } else if (level >= 20 && level <= 29) {
+                    timer = 600;
+                } else if (level >= 30 && level <= 39) {
+                    timer = 500;
+                } else if (level >= 40 && level <= 49) {
+                    timer = 400;
+                }
+                player.resetInterval.clear();
+                player.hold = 0;
+                player.resetInterval.set(() => {
+                    this.updateIntervalFall(socket, player, room, level, timer);
+                }, timer);
             }
-            player.resetInterval.clear();
-            player.resetInterval.set(() => {
-                this.updateIntervalFall(socket, player, room, level, timer);
-            }, timer);
         }
-
         room.players.forEach(playerId => {
             const clientSocket = this.io.sockets.sockets.get(playerId);
             if (clientSocket) {
@@ -307,7 +352,7 @@ class GameManager {
 
         const { action } = payload;
 
-        if (this.checkCondition(!['move-left', 'move-right', 'move-down', 'move-space', 'rotate-left', 'rotate-right'].includes(action), `Invalid action`, socket, cb)) return;
+        if (this.checkCondition(!['move-left', 'move-right', 'move-down', 'move-space', 'rotate-left', 'rotate-right', 'hold'].includes(action), `Invalid action`, socket, cb)) return;
         const player = this.players.find(player => player.id === socket.id && player.roomId);
         if (this.checkCondition(!player, `Player not found`, socket, cb)) return;
         const room = this.rooms[player.roomId];
@@ -353,6 +398,11 @@ class GameManager {
                 }
                 player.currentPosition.row -= 1;
                 break;
+            case 'hold':
+                if (player.hold === 0) {
+                    player.hold = 1;
+                }
+                break;
             default:
                 break;
         }
@@ -368,7 +418,6 @@ class GameManager {
                             position: isCurrentSocketExpert ? { x: player.currentPosition.col, y: player.currentPosition.row } : null,
                             content: isCurrentSocketExpert ? player.currentPiece.shape : null
                         },
-                        next: isCurrentSocketExpert ? player.nextPiece.shape : null,
                         hold: player.holdPiece && isCurrentSocketExpert ? player.holdPiece.shape : null
                     },
 
@@ -381,6 +430,8 @@ class GameManager {
     }
 
     handlePlayerRename(socket, payload, cb) {
+
+        // Errors
         const { name } = payload;
         const player = this.players.find(player => player.id === socket.id);
         if (this.checkCondition(!player, `Player not found.`, socket, cb)) return;
@@ -388,21 +439,23 @@ class GameManager {
         const allowedCharacters = /^(?:\w){3,16}$/;
         if (this.checkCondition(!allowedCharacters.test(name), `Name can only contain alphabets (uppercase or lowercase) and numbers.`, socket, cb)) return;
         if (this.checkCondition(this.players.some(p => p.name === name), `The name "${name}" is already in use by another player`, socket, cb)) return;
+
+        // Updates
         player.name = name;
+
+        // Returns
         cb(null, { name: name });
+
         console.log(`${socket.id} has been renamed to ${name}`);
     }
 
     handleRoomList(socket, cb) {
         const roomList = [];
         for (const roomId in this.rooms) {
-            if (Object.prototype.hasOwnProperty.call(this.rooms, roomId)) {
-                const room = this.rooms[roomId];
-                roomList.push({ id: roomId, mode: room.mode });
-            }
+            roomList.push({ id: roomId, mode: this.rooms[roomId].mode });
         }
         cb(null, roomList);
-    
+
         console.log(`Room list sent to ${socket.id}`);
     }
 
