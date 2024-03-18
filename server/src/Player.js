@@ -131,7 +131,7 @@ class Player {
 
     isGameEnd() {
         for (let col = 0; col < COLS; col++) {
-            if (this.grid[0][col]) {
+            if (this.grid[0][col] !== 0) {
                 this.resetInterval.clear();
                 return true;
             }

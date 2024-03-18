@@ -18,12 +18,12 @@ export default function Game()
 		const onKeyDown = (event) =>
 		{
 			const actions = {
-				'A': 'move-left',
-				'S': 'move-down',
-				'D': 'move-right',
+				'q': 'move-left',
+				's': 'move-down',
+				'd': 'move-right',
 				' ': 'move-space',
-				'Q': 'rotate-left',
-				'E': 'rotate-right',
+				'a': 'rotate-left',
+				'e': 'rotate-right',
 				'Shift': 'hold',
 			};
 

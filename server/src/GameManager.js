@@ -210,9 +210,6 @@ class GameManager {
             }, timer);
         }
 
-        // Trouver le leader de la salle
-        const leader = this.players.find(player => player.id === room.host);
-
         // Émet l'événement 'tetris:game:updated' à tous les autres sockets de la room
         room.players.forEach(playerId => {
             const clientSocket = this.io.sockets.sockets.get(playerId);
@@ -263,9 +260,6 @@ class GameManager {
 
         const roomPlayers = this.players.filter(player => room.players.includes(player.id));
 
-        // Trouver le leader de la salle
-        const leader = this.players.find(player => player.id === room.host);
-
         roomPlayers.forEach(player => {
             player.game = true;
             player.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
@@ -273,15 +267,12 @@ class GameManager {
             player.currentPosition = Object.create(room.positions[0]);
             player.nextPiece = Object.create(room.pieces[1]);
 
-            player.addPieceToGrid();
-
-            const playerSocket = this.io.sockets.sockets.get(player.id);
-
             player.resetInterval.set(() => {
+                const playerSocket = this.io.sockets.sockets.get(player.id);
                 this.updateIntervalFall(playerSocket, player, room, 0, 800);
             }, 800);
 
-            this.rooms[player.roomId].players.forEach(playerId => {
+            room.players.forEach(playerId => {
                 const clientSocket = this.io.sockets.sockets.get(playerId);
                 if (clientSocket) {
                     const isCurrentSocketExpert = room.mode === 'Expert' || clientSocket.id === player.id;
@@ -301,7 +292,7 @@ class GameManager {
                         }
                     ];
 
-                    clientSocket.emit('tetris:game:updated', [data[0], data[1]]);
+                    clientSocket.emit('tetris:game:updated', { piece: data[0], grid: data[1] });
                 } else {
                     console.log(`Socket not found for player ID: ${playerId}`);
                 }
@@ -367,11 +358,28 @@ class GameManager {
                 break;
         }
 
-        // Trouver le leader de la salle
-        const leader = this.players.find(player => player.id === room.host);
+        // Émet l'événement 'tetris:game:updated' à tous les autres sockets de la room
+        room.players.forEach(playerId => {
+            const clientSocket = this.io.sockets.sockets.get(playerId);
+            if (clientSocket) {
+                const isCurrentSocketExpert = room.mode === 'Expert' || clientSocket.id === socket.id;
+                const data = [
+                    {
+                        name: player.name,
+                        current: {
+                            position: isCurrentSocketExpert ? { x: player.currentPosition.col, y: player.currentPosition.row } : null,
+                            content: isCurrentSocketExpert ? player.currentPiece.shape : null
+                        },
+                        next: isCurrentSocketExpert ? player.nextPiece.shape : null,
+                        hold: player.holdPiece && isCurrentSocketExpert ? player.holdPiece.shape : null
+                    },
 
-        const playerNames = room.players.map(playerId => this.players.find(player => player.id === playerId).name);
-        this.io.to(leader.roomId).emit('tetris:room:updated', { leader: leader.name, players: playerNames });
+                ];
+                clientSocket.emit('tetris:game:updated', { piece: data[0], grid: null });
+            } else {
+                console.log(`Socket not found for player ID: ${playerId}`);
+            }
+        });
     }
 
     handlePlayerRename(socket, payload, cb) {

@@ -24,7 +24,7 @@ export default function Board(
 			{
 				for ( let j = 0 ; j < piece.current.content[0].length ; j++ )
 				{
-					if ( piece.current.content[i][j] !== '0' )
+					if ( piece.current.content[i][j] !== 0 )
 					{
 						const px = piece.current.position.x + j;
 						const py = piece.current.position.y + i;
