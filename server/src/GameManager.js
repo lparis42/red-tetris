@@ -26,7 +26,7 @@ class GameManager {
             socket.on('tetris:game:start', (cb) => this.handleRoomGameStart(socket, cb));
             socket.on('tetris:game:action', (payload, cb) => this.handleRoomGameAction(socket, payload, cb));
             socket.on('tetris:player:rename', (payload, cb) => this.handlePlayerRename(socket, payload, cb));
-            socket.on('tetris:room:list', (payload, cb) => this.handleRoomList(socket, payload, cb));
+            socket.on('tetris:room:list', (cb) => this.handleRoomList(socket, cb));
             socket.on('tetris:room:kick', (payload, cb) => this.handleRoomKick(socket, payload, cb));
 
             socket.on('disconnect', () => this.handleDisconnect(socket));
@@ -210,7 +210,6 @@ class GameManager {
             }, timer);
         }
 
-        // Émet l'événement 'tetris:game:updated' à tous les autres sockets de la room
         room.players.forEach(playerId => {
             const clientSocket = this.io.sockets.sockets.get(playerId);
             if (clientSocket) {
@@ -358,7 +357,6 @@ class GameManager {
                 break;
         }
 
-        // Émet l'événement 'tetris:game:updated' à tous les autres sockets de la room
         room.players.forEach(playerId => {
             const clientSocket = this.io.sockets.sockets.get(playerId);
             if (clientSocket) {
@@ -395,18 +393,10 @@ class GameManager {
         console.log(`${socket.id} has been renamed to ${name}`);
     }
 
-    handleRoomList(socket, payload, cb) {
-
-        const { id } = payload;
-
-        let filteredRooms = Object.values(this.rooms);
-        if (id && id.trim() !== '') {
-            filteredRooms = filteredRooms.filter(room => room.id.startsWith(id));
-        }
-
-        const roomList = filteredRooms.map(room => ({ id: room.id, mode: room.mode }));
-        cb(roomList);
-
+    handleRoomList(socket, cb) {
+        const rooms = Object.values(this.rooms).map(room => ({ id: room.id, mode: room.mode }));
+        cb(null, rooms);
+    
         console.log(`Room list sent to ${socket.id}`);
     }
 
