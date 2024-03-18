@@ -2,11 +2,9 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { SocketContext } from "../contexts/SocketContext";
 import { SelectTetris, updatePlayer, updatePlayers, leaveGame, updateGame } from "../store.slice";
+import { useUrlState } from "../hooks/useUrlState";
 import Menu from "./Menu";
 import Game from "./Game";
-
-// Constant --------------------------------------------------------------------
-const UrlInfosRegex = new RegExp(`^#(?<game>.*?)(?:\\[(?<name>.*?)\\])$`);
 
 // Component -------------------------------------------------------------------
 export default function Tetris(
@@ -15,8 +13,7 @@ export default function Tetris(
 {
 	const dispatch = useDispatch();
 	const store = useSelector(SelectTetris);
-
-	const urlInfos = UrlInfosRegex.exec(window.location.hash);
+	const { setGameId, setPlayerName } = useUrlState();
 
 	useEffect(() =>
 	{
@@ -47,11 +44,17 @@ export default function Tetris(
 		};
 	}, [ socket, dispatch ]);
 
+	useEffect(() =>
+	{
+		setGameId(store.game.id ?? '');
+		setPlayerName(store.player.name ?? '');
+	}, [ store, setGameId, setPlayerName ]);
+
 	return (
 		<div className={ `tetris` }>
 			<SocketContext.Provider value={ socket }>
 				{ ( ! store.game.active )
-					? <Menu infos={ urlInfos?.groups } />
+					? <Menu />
 					: <Game />
 				}
 			</SocketContext.Provider>

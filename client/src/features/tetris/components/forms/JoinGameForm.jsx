@@ -36,7 +36,8 @@ export default function JoinGameForm(
 
 			const list = res;
 
-			if (list.length === 0) {
+			if ( ! list?.length )
+			{
 				return setError(`Room not found`);
 			}
 
