@@ -22,7 +22,7 @@ export default function JoinGameForm(
 		{
 			submit();
 		}
-	}, [ initialValue ]);
+	}, [ initialValue, submit ]);
 
 	const onSubmit = useCallback((event) => {
 		event.preventDefault();

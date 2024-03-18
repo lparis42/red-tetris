@@ -26,7 +26,7 @@ export default function RenamePlayerForm(
 		{
 			submit();
 		}
-	}, [ initialValue ]);
+	}, [ initialValue, submit ]);
 
 	const onSubmit = useCallback((event) =>
 	{
