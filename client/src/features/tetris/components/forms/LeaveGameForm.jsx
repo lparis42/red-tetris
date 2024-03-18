@@ -1,5 +1,4 @@
 import { useCallback, useContext } from "react";
-import { useDispatch } from "react-redux";
 import { SocketContext } from "../../contexts/SocketContext";
 import Form from "../../../../core/components/ui/forms/Form";
 import Button from "../../../../core/components/ui/buttons/Button";
@@ -8,7 +7,6 @@ import Button from "../../../../core/components/ui/buttons/Button";
 export default function LeaveGameForm()
 {
 	const socket = useContext(SocketContext);
-	const dispatch = useDispatch();
 
 	const onSubmit = useCallback((event) => {
 		event.preventDefault();
@@ -22,7 +20,7 @@ export default function LeaveGameForm()
 			}
 		});
 	}, [socket]);
-	
+
 	return (
 		<Form onSubmit={ onSubmit }>
 			<Button>Leave</Button>

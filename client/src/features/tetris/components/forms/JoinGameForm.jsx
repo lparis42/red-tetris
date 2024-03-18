@@ -1,5 +1,6 @@
-import { useEffect, useCallback, useContext } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import { useInput } from '../../../../core/hooks/useInput';
+import { useDebounce } from '../../../../core/hooks/useDebounce';
 import { SocketContext } from '../../contexts/SocketContext';
 import { validateGameID } from '../../validations/validateGameID';
 import Form from '../../../../core/components/ui/forms/Form';
@@ -14,6 +15,8 @@ export default function JoinGameForm(
 {
 	const socket = useContext(SocketContext);
 	const { value, setValue, error, setError } = useInput(validateGameID);
+	const [ suggestions, setSuggestions ] = useState([]);
+	const debouncedValue = useDebounce(value, 250);
 
 	useEffect(() =>
 	{
@@ -22,6 +25,31 @@ export default function JoinGameForm(
 			setValue(initialValue);
 		}
 	}, [ initialValue, setValue ]);
+
+	const updateSuggestions = useCallback(() =>
+	{
+		socket.emit('tetris:room:list', { id: debouncedValue }, (err, res) =>
+		{
+			if ( ! debouncedValue )
+			{
+				return setError('');
+			}
+
+			const list = res;
+
+			if ( list.length === 0 )
+			{
+				return setError(`Room not found`);
+			}
+
+			setSuggestions(list.map((({ id, mode }) => ({ value: id, label: `[${mode}] ${id} ` }))));
+		});
+	}, [ socket, debouncedValue, setSuggestions, setError ]);
+
+	useEffect(() =>
+	{
+		updateSuggestions();
+	}, [ debouncedValue, updateSuggestions ]);
 
 	const onSubmit = useCallback((event) =>
 	{
@@ -48,7 +76,7 @@ export default function JoinGameForm(
 	return (
 		<Form onSubmit={ onSubmit }>
 			<Field label="Game ID" error={ error }>
-				<Input type='text' name='game_id' autoComplete='off' value={ value } onChange={ (e) => setValue(e.target.value) } />
+				<Input type='text' name='game_id' autoComplete='off' value={ value } suggestions={ suggestions } onChange={ (e) => setValue(e.target.value) } />
 			</Field>
 			<Button disabled={ !! error || ! value } type='submit'>Join</Button>
 		</Form>

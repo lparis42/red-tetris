@@ -22,7 +22,7 @@ export default function KickPlayerForm(
 				return console.log(error);
 			}
 		});
-	}, [socket]);
+	}, [socket, name]);
 
 
 	return (
