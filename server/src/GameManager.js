@@ -394,8 +394,14 @@ class GameManager {
     }
 
     handleRoomList(socket, cb) {
-        const rooms = Object.values(this.rooms).map(room => ({ id: room.id, mode: room.mode }));
-        cb(null, rooms);
+        const roomList = [];
+        for (const roomId in this.rooms) {
+            if (Object.prototype.hasOwnProperty.call(this.rooms, roomId)) {
+                const room = this.rooms[roomId];
+                roomList.push({ id: roomId, mode: room.mode });
+            }
+        }
+        cb(null, roomList);
     
         console.log(`Room list sent to ${socket.id}`);
     }
