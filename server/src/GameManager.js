@@ -81,16 +81,24 @@ class GameManager {
     }
 
     handleRoomCreate(socket, payload, cb) {
-        const { mode } = payload;
+        const { id, mode } = payload;
         const player = this.players.find(player => player.id === socket.id);
         if (this.checkCondition(!player, 'Player not found', socket, cb)) return;
         if (this.checkCondition(player.roomId !== null, 'You are already in a room', socket, cb)) return;
         if (this.checkCondition(mode !== 'Standard' && mode !== 'Expert', 'Invalid room mode', socket, cb)) return;
 
         let roomId;
-        do {
-            roomId = Array.from({ length: 6 }, () => Math.random().toString(36).charAt(2)).join('');
-        } while (this.rooms[roomId]);
+        if (id) {
+            roomId = id;
+            if (this.rooms[roomId]) {
+                this.handleRoomJoin(socket, { id: id }, cb);
+                return;
+            }
+        } else {
+            do {
+                roomId = Array.from({ length: 6 }, () => Math.random().toString(36).charAt(2)).join('');
+            } while (this.rooms[roomId]);
+        }
 
         const room = new Room(socket.id, mode);
         this.rooms[roomId] = room;
