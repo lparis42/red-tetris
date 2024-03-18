@@ -2,11 +2,16 @@ import { useState, useEffect } from "react";
 
 // Hook ------------------------------------------------------------------------
 export function useInput(
-	validate
+	initialValue, validate = undefined
 )
 {
-	const [ value, setValue ] = useState('');
+	const [ value, setValue ] = useState(initialValue);
 	const [ error, setError ] = useState('');
+
+	useEffect(() =>
+	{
+		setValue(initialValue);
+	}, [ initialValue ]);
 
 	useEffect(() =>
 	{

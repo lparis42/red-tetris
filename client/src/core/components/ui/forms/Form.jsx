@@ -1,12 +1,15 @@
+import { forwardRef } from 'react';
 
 // Component -------------------------------------------------------------------
-export default function Form(
-	{ className = '', children, ...attrs }
-)
+const Form = forwardRef((
+	{ className = '', children, ...attrs }, ref
+) =>
 {
 	return (
-		<form { ...attrs } className={ `form rounded ${className}` } >
+		<form { ...attrs } ref={ ref } className={ `form rounded ${className}` } >
 			{ children }
 		</form>
 	);
-}
+});
+
+export default Form;

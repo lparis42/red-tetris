@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useContext } from 'react';
 import { useDispatch } from 'react-redux';
 import { useInput } from '../../../../core/hooks/useInput';
+import { useSubmit } from '../../../../core/hooks/useSubmit';
 import { SocketContext } from '../../contexts/SocketContext';
 import { validatePlayerName } from '../../validations/validatePlayerName';
 import { updatePlayer } from '../../store.slice';
@@ -14,17 +15,18 @@ export default function RenamePlayerForm(
 	{ initialValue }
 )
 {
-	const socket = useContext(SocketContext);
 	const dispatch = useDispatch();
-	const { value, setValue, error, setError } = useInput(validatePlayerName);
+	const socket = useContext(SocketContext);
+	const { value, setValue, error, setError } = useInput(initialValue, validatePlayerName);
+	const { formRef, submit } = useSubmit();
 
 	useEffect(() =>
 	{
 		if ( initialValue )
 		{
-			setValue(initialValue);
+			submit();
 		}
-	}, [ initialValue, setValue ]);
+	}, [ initialValue ]);
 
 	const onSubmit = useCallback((event) =>
 	{
@@ -34,28 +36,23 @@ export default function RenamePlayerForm(
 
 		socket.emit('tetris:player:rename', { name: form.get('player_name') }, (err, res) =>
 		{
-			if ( err )
-			{
-				return console.log(`SocketIO:Error: `, err);
-			}
-
 			const { error, name } = res;
 
 			if ( error )
 			{
 				return setError(error);
 			}
-			
+
 			dispatch(updatePlayer({ name }));
 		});
 	}, [ socket, dispatch, setError ]);
 
 	return (
-		<Form onSubmit={ onSubmit }>
+		<Form onSubmit={ onSubmit } ref={ formRef }>
 			<Field label="Choose your name" error={ error }>
 				<Input type='text' name='player_name' autoComplete='off' value={ value } onChange={ (e) => setValue(e.target.value) } />
 			</Field>
-			<Button disabled={ ! value || !! error }>Continue</Button>
+			<Button type='submit' disabled={ ! value || !! error }>Continue</Button>
 		</Form>
 	);
 }

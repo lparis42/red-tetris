@@ -1,13 +1,12 @@
 
 // Constant --------------------------------------------------------------------
-// const GameRegex = /^(?:\w|-){8,32}$/;
+const GameRegex = /^(?:\w){8,16}$/;
 
 // Validate --------------------------------------------------------------------
 export function validateGameID(id)
 {
-	return ''; // Todo: Remove
-	// if ( ! GameRegex.test(id) )
-	// {
-	// 	return `Invalid Format: Regex( ${GameRegex.source} )`;
-	// }
+	if ( id && ! GameRegex.test(id) )
+	{
+		return `Invalid Format: (a-z, A-Z, 0-9, _){8, 16}`;
+	}
 }
