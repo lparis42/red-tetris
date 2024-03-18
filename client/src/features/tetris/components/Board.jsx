@@ -26,7 +26,13 @@ export default function Board(
 				{
 					if ( piece.current.content[i][j] !== '0' )
 					{
-						gridWithPiece[piece.current.position.y + j][piece.current.position.x + i] = piece.current.content[i][j];
+						const px = piece.current.position.x + j;
+						const py = piece.current.position.y + i;
+
+						if ( py >= 0 )
+						{
+							gridWithPiece[py][px] = piece.current.content[i][j];
+						}
 					}
 				}
 			}
