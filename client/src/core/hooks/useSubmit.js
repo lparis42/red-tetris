@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 
 // Hook ------------------------------------------------------------------------
 export function useSubmit()
@@ -14,10 +14,10 @@ export function useSubmit()
 		}
 	}, [ trigger ]);
 
-	function submit()
+	const submit = useCallback(() =>
 	{
-		setTrigger(trigger + 1);
-	}
+		setTrigger((n) => n+1);
+	}, [ setTrigger ]);
 
 	// Expose
 	return {
