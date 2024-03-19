@@ -9,6 +9,7 @@ import Form from '../../../../core/components/ui/forms/Form';
 import Field from '../../../../core/components/ui/forms/Field';
 import Input from '../../../../core/components/ui/forms/Input';
 import Button from '../../../../core/components/ui/buttons/Button';
+import { useUrlState } from '../../hooks/useUrlState';
 
 // Component -------------------------------------------------------------------
 export default function RenamePlayerForm(
@@ -17,6 +18,7 @@ export default function RenamePlayerForm(
 {
 	const dispatch = useDispatch();
 	const socket = useContext(SocketContext);
+	const urlState = useUrlState();
 	const { value, setValue, error, setError } = useInput(initialValue, validatePlayerName);
 	const { formRef, submit } = useSubmit();
 
@@ -43,9 +45,10 @@ export default function RenamePlayerForm(
 				return setError(error);
 			}
 
+			urlState.set({ player: name });
 			dispatch(updatePlayer({ name }));
 		});
-	}, [ socket, dispatch, setError ]);
+	}, [ socket, urlState, dispatch, setError ]);
 
 	return (
 		<Form onSubmit={ onSubmit } ref={ formRef }>

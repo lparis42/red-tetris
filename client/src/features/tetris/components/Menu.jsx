@@ -23,6 +23,7 @@ export default function Menu()
 		const onRoomJoined = ({ id, mode, active, leader }) =>
 		{
 			dispatch(updateGame({ id, mode, active, leader }));
+			urlState.set({ game: id });
 		};
 
 		socket.on('tetris:room:joined', onRoomJoined);
@@ -31,7 +32,7 @@ export default function Menu()
 		{
 			socket.off('tetris:room:joined');
 		};
-	}, [ socket, dispatch ]);
+	}, [ socket, urlState, dispatch ]);
 
 	return (
 		<div className={ `tetris-menu` }>
@@ -41,11 +42,11 @@ export default function Menu()
 			<div className={ `tetris-menu__content` }>
 				{ ( ! store.player.name )
 					? <>
-						<RenamePlayerForm initialValue={ urlState.playerName } />
+						<RenamePlayerForm initialValue={ urlState.get('player') } />
 					  </>
 					: ( ! store.game.id )
 					? <>
-						<JoinGameForm initialValue={ urlState.gameId } />
+						<JoinGameForm initialValue={ urlState.get('game') } />
 						<Divider label='OR' />
 						<CreateGameForm />
 					  </>

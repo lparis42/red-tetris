@@ -2,9 +2,9 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { SocketContext } from "../contexts/SocketContext";
 import { SelectTetris, updatePlayer, updatePlayers, leaveGame, updateGame } from "../store.slice";
-import { useUrlState } from "../hooks/useUrlState";
 import Menu from "./Menu";
 import Game from "./Game";
+import { useUrlState } from "../hooks/useUrlState";
 
 // Component -------------------------------------------------------------------
 export default function Tetris(
@@ -13,7 +13,7 @@ export default function Tetris(
 {
 	const dispatch = useDispatch();
 	const store = useSelector(SelectTetris);
-	const { setGameId, setPlayerName } = useUrlState();
+	const urlState = useUrlState();
 
 	useEffect(() =>
 	{
@@ -28,6 +28,7 @@ export default function Tetris(
 		const onRoomLeave = () =>
 		{
 			dispatch(leaveGame());
+			urlState.set({ game: '' });
 		}
 
 		socket.on('tetris:room:updated', onRoomUpdated);
@@ -42,13 +43,7 @@ export default function Tetris(
 
 			socket.offAny(); // Todo: Remove
 		};
-	}, [ socket, dispatch ]);
-
-	useEffect(() =>
-	{
-		setGameId(store.game.id ?? '');
-		setPlayerName(store.player.name ?? '');
-	}, [ store, setGameId, setPlayerName ]);
+	}, [ socket, urlState, dispatch ]);
 
 	return (
 		<div className={ `tetris` }>

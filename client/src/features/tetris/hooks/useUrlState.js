@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 
 // Constant --------------------------------------------------------------------
 const UrlStateRegex = /^#(?<game>.*?)(?:\[(?<player>.*?)\])$/;
@@ -6,37 +5,24 @@ const UrlStateRegex = /^#(?<game>.*?)(?:\[(?<player>.*?)\])$/;
 // Hook ------------------------------------------------------------------------
 export function useUrlState()
 {
-	const [ gameId, setGameId ] = useState('');
-	const [ playerName, setPlayerName ] = useState('');
-
-	useEffect(() =>
+	function get(key, fallback = '')
 	{
-		const state = UrlStateRegex.exec(window.location.hash)
+		const url = UrlStateRegex.exec(window.location.hash);
 
-		if ( ! state )
-		{
-			return ;
-		}
+		return url?.groups?.[key] ?? fallback;
+	}
 
-		setGameId(state.groups?.game ?? '');
-		setPlayerName(state.groups?.player ?? '');
-	}, [ setGameId, setPlayerName ]);
-
-	useEffect(() =>
+	function set({ game, player })
 	{
-		if ( ! gameId && ! playerName )
-		{
-			return ;
-		}
+		const gameId = game ?? get('game', '');
+		const playerName = player ?? get('player', '');
 
 		window.location.hash = `#${ gameId }${ ( playerName ) ? `[${ playerName }]` : ``}`;
-	}, [ gameId, playerName ]);
+	}
 
 	return {
-		gameId,
-		playerName,
-		setGameId,
-		setPlayerName,
+		get,
+		set
 	};
 
 }
