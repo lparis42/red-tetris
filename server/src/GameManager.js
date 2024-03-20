@@ -123,6 +123,7 @@ class GameManager {
         const room = this.rooms[id];
         if (this.checkCondition(!room, `Room not found with ID: ${id}`, socket, cb)) return;
         if (this.checkCondition(room.players.length >= 9, 'Room is full', socket, cb)) return;
+        if (this.checkCondition(room.start === true, 'Room is currently playing', socket, cb)) return;
         if (this.checkCondition(player.roomId !== null, 'Player is already in a room', socket, cb)) return;
 
         room.addPlayer(player.id);
@@ -226,6 +227,11 @@ class GameManager {
                 }
 
                 if (player.isGameEnd()) {
+                    const playersInRoom = room.players.map(playerId => this.players[playerId]);
+                    const allPlayersEnded = playersInRoom.every(p => !p.game);
+                    if (allPlayersEnded) {
+                        room.start = false;
+                    }
                     socket.emit('tetris:game:ended');
                     return;
                 }
