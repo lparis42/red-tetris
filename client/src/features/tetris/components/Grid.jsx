@@ -34,7 +34,7 @@ export default function Grid(
 	}
 
 	return (
-		<div style={ { '--grid-rows': grid.length, '--grid-cols': grid[0].length } } className={ `tetris-grid` }>
+		<div style={ { '--_grid-rows': grid.length, '--_grid-cols': grid[0].length } } className={ `tetris-grid` }>
 			{ grid.map((row, row_idx) =>
 				<div key={ row_idx } className={ `tetris-grid__row` }>
 					{ row.map((cell, col_idx) =>

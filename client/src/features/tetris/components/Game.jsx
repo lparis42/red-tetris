@@ -88,17 +88,17 @@ export default function Game() {
 				<Logo />
 			</header>
 			<div className={`tetris-game__content`}>
-				<div style={{ '--cols': cols, '--rows': rows }} className={`tetris-game__specters`} >
+				<div style={{ '--_specters-cols': cols, '--_specters-rows': rows }} className={`tetris-game__specters`} >
 					{leftPlayers.map((player) =>
-						<Board key={player.name} player={player} />
+						<Board key={player.name} player={player} specter />
 					)}
 				</div>
 
 				<Board player={store.game.players.find((player) => player.name === store.player.name)} />
 
-				<div style={{ '--cols': cols, '--rows': rows }} className={`tetris-game__specters`}>
+				<div style={{ '--_specters-cols': cols, '--_specters-rows': rows }} className={`tetris-game__specters`}>
 					{rightPlayers.map((player) =>
-						<Board key={player.name} player={player} />
+						<Board key={player.name} player={player} specter />
 					)}
 				</div>
 			</div>

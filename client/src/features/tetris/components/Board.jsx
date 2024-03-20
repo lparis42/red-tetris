@@ -3,7 +3,7 @@ import Grid from "./Grid";
 
 // Component -------------------------------------------------------------------
 export default function Board(
-	{ player }
+	{ player, specter }
 )
 {
 	const { name, score = 0, piece, grid } = player;
@@ -43,31 +43,26 @@ export default function Board(
 
 	return (
 		<div className={ `tetris-board` }>
-			<div className={ `tetris-board__sidebar` }>
-				<div>
-					Next
+			<div className={ `tetris-board__header` }>
+				<span>{ name }</span>
+				<span>{ score }</span>
+			</div>
+			{ ( ! specter ) &&
+				<div className={ `tetris-board__sidebar` }>
 					<div className={ `tetris-sidebar__preview` }>
 						{ ( piece?.next )
 							? <Grid grid={ piece.next } />
-							: "?"
+							: <div className={ `tetris-sidebar__preview--unknown` }>?</div>
 						}
 					</div>
-				</div>
-				<div>
-					Hold
 					<div className={ `tetris-sidebar__preview` }>
 						{ ( piece?.hold )
 							? <Grid grid={ piece.hold } />
-							: "?"
+							: <div className={ `tetris-sidebar__preview--unknown` }>?</div>
 						}
 					</div>
 				</div>
-				<div>
-					Score <br />
-					{ score }
-				</div>
-				<span className={ `tetris-sidebar__player` }>{ name }</span>
-			</div>
+			}
 			<div className={ `tetris-board__grid` }>
 				{ ( gridWithPiece )
 					? <Grid grid={ gridWithPiece } />
