@@ -16,6 +16,7 @@ class Player {
         this.hold = 0;
         this.penalty = 0;
         this.game = false;
+        this.score = 0;
         this.resetInterval = {
             interval: null,
             set(fn, time) {
@@ -128,13 +129,13 @@ class Player {
         this.hold = 0;
         this.penalty = 0;
         this.game = false;
+        this.score = 0;
         this.resetInterval.clear();
     }
 
     isGameEnd() {
         for (let col = 0; col < COLS; col++) {
             if (this.grid[0][col] !== 0) {
-                this.resetInterval.clear();
                 return true;
             }
         }
