@@ -85,7 +85,7 @@ class GameManager {
         const player = this.players.find(player => player.id === socket.id);
         if (this.checkCondition(!player, 'Player not found', socket, cb)) return;
         if (this.checkCondition(player.roomId !== null, 'You are already in a room', socket, cb)) return;
-        if (this.checkCondition(mode === 'Standard' && mode === 'Expert', 'Invalid room mode', socket, cb)) return;
+        if (this.checkCondition(mode !== 'Standard' && mode !== 'Expert', 'Invalid room mode', socket, cb)) return;
 
         let roomId;
         if (id) {
