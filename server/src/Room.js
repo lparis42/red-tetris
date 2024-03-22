@@ -7,6 +7,7 @@ class Room {
         this.pieces = [];
         this.positions = [];
         this.mode = mode;
+        this.start = false;
     }
 
     addPlayer(playerId) {
