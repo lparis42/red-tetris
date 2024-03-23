@@ -1,10 +1,10 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "src/server.js",
+  "main": "src/Index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon src/server.js"
+    "test": "jest",
+    "start": "nodemon src/Index.js"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +15,8 @@
     "socket.io": "^4.7.4"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3"
+    "jest": "^27.5.1",
+    "nodemon": "^3.0.3",
+    "supertest": "^6.3.4"
   }
 }
