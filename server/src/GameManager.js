@@ -247,9 +247,9 @@ class GameManager {
                     }
                     // S'il reste un seul joueur en jeu
                     else if (remainingPlayers.length === 1) {
-                        const winner = playersInRoom[0];
+                        const winner = remainingPlayers[0];
                         this.io.to(player.roomId).emit("tetris:game:winner", winner.name);
-                        const winnerSocket = this.io.sockets.sockets.find(socket => socket.id === winner.id);
+                        const winnerSocket = this.io.sockets.sockets.get(winner.id);
                         winnerSocket.emit('tetris:game:ended');
                     }
 
