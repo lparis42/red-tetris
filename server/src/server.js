@@ -13,7 +13,12 @@ class Server {
     constructor() {
         this.app = express();
         this.server = http.createServer(this.app);
-        this.io = require('socket.io')(this.server);
+        this.io = socketIo(this.server, {
+            cors: {
+              origin: ['http://localhost', 'http://localhost:3000'],
+              methods: ['GET', 'POST']
+            }
+          });
         this.configureMiddleware();
         this.configureRoutes();
         this.start();
@@ -28,21 +33,17 @@ class Server {
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
             // Autoriser les en-têtes spécifiés
             res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-            
-            try {
-                // Ajouter l'objet io à l'objet de la requête
-                req.io = this.io;
-        
-                // Initialiser le GameManager avec l'instance de socket.io
-                req.gameManager = new GameManager(req.io);
-            } catch (error) {
-                console.error('Error initializing socket.io:', error);
-            }
-    
+
+            // Ajouter l'objet io à l'objet de la requête
+            req.io = this.io;
+
+            // Initialiser le GameManager avec l'instance de socket.io
+            req.gameManager = new GameManager(req.io);
+
             // Passer la requête au prochain middleware
             next();
         });
-    
+
         // Middleware pour servir les fichiers statiques depuis le dossier build
         this.app.use(express.static(path.join(__dirname, '../..', 'client', 'build')));
     }
@@ -60,7 +61,13 @@ class Server {
             console.log(`Server running on port ${PORT}`);
         });
     }
+
+    closeServer(done) {
+        this.server.close(done);
+    }
 }
 
-// Créer une instance du serveur
-new Server();
+const serverInstance = new Server();
+
+// Exporter la classe Server pour une utilisation éventuelle dans d'autres parties de l'application
+module.exports = Server;
