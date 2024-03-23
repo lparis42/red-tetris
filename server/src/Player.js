@@ -115,13 +115,8 @@ class Player {
         return spectrum;
     }
 
-    reset() {
-        this.roomId = null;
-        this.grid = null;
-        this.closeGame();
-    }
-
     closeGame() {
+        this.grid = null;
         this.currentPiece = null;
         this.currentPosition = null;
         this.nextPiece = null;

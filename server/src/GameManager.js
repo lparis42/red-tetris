@@ -77,7 +77,8 @@ class GameManager {
         console.log(`${player.id} kicked from room ${player.roomId}`);
 
         // Remise à zéro
-        player.reset();
+        player.roomId = null;
+        player.closeGame();
     }
 
     handleRoomCreate(socket, payload, cb) {
@@ -236,7 +237,32 @@ class GameManager {
                 }
 
                 if (player.isGameEnd()) {
-                    player.game = false;
+                    room.players.forEach(playerId => {
+                        const clientSocket = this.io.sockets.sockets.get(playerId);
+                        const isCurrentSocketExpert = room.mode === 'Expert' || clientSocket.id === socket.id;
+                        const pieceData = {
+                            name: player.name,
+                            current: {
+                                position: isCurrentSocketExpert ? { x: player.currentPosition.col, y: player.currentPosition.row } : null,
+                                content: isCurrentSocketExpert ? player.currentPiece.shape : null
+                            },
+                            next: isCurrentSocketExpert ? player.nextPiece.shape : null,
+                            hold: player.holdPiece && isCurrentSocketExpert ? player.holdPiece.shape : null
+                        };
+            
+                        const gridData = {
+                            name: player.name,
+                            grid: isCurrentSocketExpert ? player.grid : player.calculateSpectrum()
+                        };
+            
+                        const scoreData = {
+                            name: player.name,
+                            score: player.score
+                        };
+                        clientSocket.emit('tetris:game:updated', { piece: pieceData, grid: gridData, score: scoreData });
+                    });
+                    
+                    player.closeGame();
                     socket.emit('tetris:game:ended');
 
                     const playersInRoom = this.players.filter(p => room.players.includes(p.id));
@@ -248,12 +274,13 @@ class GameManager {
                     // S'il reste un seul joueur en jeu
                     else if (remainingPlayers.length === 1) {
                         const winner = remainingPlayers[0];
-                        this.io.to(player.roomId).emit("tetris:game:winner", winner.name);
+                        winner.closeGame();
                         const winnerSocket = this.io.sockets.sockets.get(winner.id);
                         winnerSocket.emit('tetris:game:ended');
+
+                        this.io.to(player.roomId).emit("tetris:game:winner", winner.name);
                     }
 
-                    player.resetInterval.clear();
                     return;
                 }
 
@@ -292,31 +319,27 @@ class GameManager {
         }
         room.players.forEach(playerId => {
             const clientSocket = this.io.sockets.sockets.get(playerId);
-            if (clientSocket) {
-                const isCurrentSocketExpert = room.mode === 'Expert' || clientSocket.id === socket.id;
-                const pieceData = {
-                    name: player.name,
-                    current: {
-                        position: isCurrentSocketExpert ? { x: player.currentPosition.col, y: player.currentPosition.row } : null,
-                        content: isCurrentSocketExpert ? player.currentPiece.shape : null
-                    },
-                    next: isCurrentSocketExpert ? player.nextPiece.shape : null,
-                    hold: player.holdPiece && isCurrentSocketExpert ? player.holdPiece.shape : null
-                };
+            const isCurrentSocketExpert = room.mode === 'Expert' || clientSocket.id === socket.id;
+            const pieceData = {
+                name: player.name,
+                current: {
+                    position: isCurrentSocketExpert ? { x: player.currentPosition.col, y: player.currentPosition.row } : null,
+                    content: isCurrentSocketExpert ? player.currentPiece.shape : null
+                },
+                next: isCurrentSocketExpert ? player.nextPiece.shape : null,
+                hold: player.holdPiece && isCurrentSocketExpert ? player.holdPiece.shape : null
+            };
 
-                const gridData = {
-                    name: player.name,
-                    grid: isCurrentSocketExpert ? player.grid : player.calculateSpectrum()
-                };
+            const gridData = {
+                name: player.name,
+                grid: isCurrentSocketExpert ? player.grid : player.calculateSpectrum()
+            };
 
-                const scoreData = {
-                    name: player.name,
-                    score: player.score
-                };
-                clientSocket.emit('tetris:game:updated', { piece: pieceData, grid: gridData, score: scoreData });
-            } else {
-                console.log(`Socket not found for player ID: ${playerId}`);
-            }
+            const scoreData = {
+                name: player.name,
+                score: player.score
+            };
+            clientSocket.emit('tetris:game:updated', { piece: pieceData, grid: gridData, score: scoreData });
         });
 
 
