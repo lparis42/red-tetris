@@ -267,7 +267,7 @@ class GameManager {
                     });
 
                     player.closeGame();
-                    socket.emit('tetris:game:ended');
+                    this.io.to(player.roomId).emit("tetris:game:ended", { name: player.name });
 
                     const playersInRoom = this.players.filter(p => room.players.includes(p.id));
                     const remainingPlayers = playersInRoom.filter(p => p.game);
@@ -279,10 +279,8 @@ class GameManager {
                     else if (remainingPlayers.length === 1) {
                         const winner = remainingPlayers[0];
                         winner.closeGame();
-                        const winnerSocket = this.io.sockets.sockets.get(winner.id);
-                        winnerSocket.emit('tetris:game:ended');
 
-                        this.io.to(player.roomId).emit("tetris:game:winner", winner.name);
+                        this.io.to(player.roomId).emit("tetris:game:winner", { name: winner.name });
                     }
 
                     return;
