@@ -36,7 +36,7 @@ class GameManager {
     checkCondition(condition, message, socket, cb) {
         if (condition) {
             cb({ error: message });
-            console.error(`${socket.id} <!> ${message}`);
+            console.log(`${socket.id} <!> ${message}`);
             return true;
         }
         return false;

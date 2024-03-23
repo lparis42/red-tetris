@@ -14,7 +14,7 @@ export default function Game()
 	const self = useMemo(() =>
 	{
 		return game.players.find((p) => p.name === player.name);
-	}, [ game.players ]);
+	}, [ game.players, player.name ]);
 
 	const { leftPlayers, rightPlayers } = useMemo(() =>
 	{

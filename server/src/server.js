@@ -46,6 +46,4 @@ class Server {
     }
 }
 
-const serverInstance = new Server();
-
 module.exports = Server;
