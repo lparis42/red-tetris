@@ -1,14 +1,11 @@
-// Importations nécessaires
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 const GameManager = require('./GameManager');
 
-// Port sur lequel le serveur écoutera
 const PORT = process.env.PORT || 80;
 
-// Classe du serveur
 class Server {
     constructor() {
         this.app = express();
@@ -51,5 +48,4 @@ class Server {
 
 const serverInstance = new Server();
 
-// Exporter la classe Server pour une utilisation éventuelle dans d'autres parties de l'application
 module.exports = Server;
