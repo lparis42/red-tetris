@@ -364,6 +364,8 @@ class GameManager {
         const positionN = new Position(pieceN.shape);
         room.addPiece(pieceN, positionN);
 
+        room.start = true;
+
         const roomPlayers = this.players.filter(player => room.players.includes(player.id));
 
         roomPlayers.forEach(player => {
