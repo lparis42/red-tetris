@@ -26,22 +26,6 @@ class Server {
     }
 
     configureMiddleware() {
-        // Middleware pour autoriser les requêtes CORS et initialiser socket.io et GameManager
-        this.app.use((req, res, next) => {
-            // Autoriser les requêtes depuis les domaines spécifiés
-            res.setHeader('Access-Control-Allow-Origin', 'http://localhost:80', 'http://localhost:3000');
-            // Autoriser les méthodes HTTP spécifiées
-            res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-            // Autoriser les en-têtes spécifiés
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-            // Ajouter l'objet io à l'objet de la requête
-            req.io = this.io;
-
-            // Passer la requête au prochain middleware
-            next();
-        });
-
         // Middleware pour servir les fichiers statiques depuis le dossier build
         this.app.use(express.static(path.join(__dirname, '../..', 'client', 'build')));
     }
