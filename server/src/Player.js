@@ -14,6 +14,7 @@ class Player {
         this.nextPiece = null;
         this.holdPiece = null;
         this.hold = 0;
+        this.lock = false;
         this.penalty = 0;
         this.game = false;
         this.score = 0;
@@ -122,6 +123,7 @@ class Player {
         this.nextPiece = null;
         this.holdPiece = null;
         this.hold = 0;
+        this.lock = false;
         this.penalty = 0;
         this.game = false;
         this.score = 0;

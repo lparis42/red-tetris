@@ -316,6 +316,7 @@ class GameManager {
                 }
                 player.resetInterval.clear();
                 player.hold = 0;
+                player.lock = false;
                 player.resetInterval.set(() => {
                     this.updateIntervalFall(socket, player, room, level, timer);
                 }, timer);
@@ -414,17 +415,19 @@ class GameManager {
         });
 
         this.io.to(player.roomId).emit("tetris:game:started");
-
+        cb({ error: null });
         console.log(`Game started in room ${player.roomId}`);
     }
 
     handleRoomGameAction(socket, payload, cb) {
-
         const { action } = payload;
 
         if (this.checkCondition(!['move-left', 'move-right', 'move-down', 'move-space', 'rotate-left', 'rotate-right', 'hold'].includes(action), `Invalid action`, socket, cb)) return;
         const player = this.players.find(player => player.id === socket.id && player.roomId);
+
         if (this.checkCondition(!player, `Player not found`, socket, cb)) return;
+        if (player.lock) return;
+
         const room = this.rooms[player.roomId];
         if (this.checkCondition(!room, `Room not found`, socket, cb)) return;
         if (this.checkCondition(!room.players.includes(player.id), `Player is not in the room ${room.id}`, socket, cb)) return;
@@ -450,15 +453,35 @@ class GameManager {
                 }
                 break;
             case 'rotate-left':
-                player.currentPiece.rotatePieceLeft();
-                if (!player.isPieceCanMove()) {
-                    player.currentPiece.rotatePieceRight();
+                {
+                    player.currentPiece.rotatePieceLeft();
+                    const positionCopy = Object.create(player.currentPosition);
+                    const overflow = (player.currentPosition.col + (player.currentPiece.shape[0].length - 1)) - COLS + 1;
+
+                    if (overflow > 0) {
+                        player.currentPosition.col -= overflow;
+                    }
+
+                    if (!player.isPieceCanMove()) {
+                        player.currentPiece.rotatePieceRight();
+                        player.currentPosition = positionCopy;
+                    }
                 }
                 break;
             case 'rotate-right':
-                player.currentPiece.rotatePieceRight();
-                if (!player.isPieceCanMove()) {
-                    player.currentPiece.rotatePieceLeft();
+                {
+                    player.currentPiece.rotatePieceRight();
+                    const positionCopy = Object.create(player.currentPosition);
+                    const overflow = (player.currentPosition.col + (player.currentPiece.shape[0].length - 1)) - COLS + 1;
+
+                    if (overflow > 0) {
+                        player.currentPosition.col -= overflow;
+                    }
+
+                    if (!player.isPieceCanMove()) {
+                        player.currentPiece.rotatePieceLeft();
+                        player.currentPosition = positionCopy;
+                    }
                 }
                 break;
             case 'move-space':
@@ -467,6 +490,7 @@ class GameManager {
                     player.currentPosition.row += 1;
                 }
                 player.currentPosition.row -= 1;
+                player.lock = true;
                 break;
             case 'hold':
                 if (player.hold === 0) {
@@ -496,6 +520,7 @@ class GameManager {
                 console.log(`Socket not found for player ID: ${playerId}`);
             }
         });
+
     }
 
     handlePlayerRename(socket, payload, cb) {
