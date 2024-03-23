@@ -236,21 +236,21 @@ class GameManager {
                 }
 
                 if (player.isGameEnd()) {
+                    player.game = false;
                     socket.emit('tetris:game:ended');
 
                     const playersInRoom = this.players.filter(p => room.players.includes(p.id));
-                    const allPlayersEnded = playersInRoom.every(p => !p.game);
+                    const remainingPlayers = playersInRoom.filter(p => p.game);
 
-                    if (allPlayersEnded) {
+                    if (remainingPlayers.length == 0) {
                         room.start = false;
-
-                        // S'il reste un seul joueur en jeu
-                        if (playersInRoom.length === 1) {
-                            const winner = playersInRoom[0];
-                            this.io.to(player.roomId).emit("tetris:game:winner", winner.name);
-                            const winnerSocket = this.io.sockets.sockets.find(socket => socket.id === winner.id);
-                            winnerSocket.emit('tetris:game:ended');
-                        }
+                    }
+                    // S'il reste un seul joueur en jeu
+                    else if (remainingPlayers.length === 1) {
+                        const winner = playersInRoom[0];
+                        this.io.to(player.roomId).emit("tetris:game:winner", winner.name);
+                        const winnerSocket = this.io.sockets.sockets.find(socket => socket.id === winner.id);
+                        winnerSocket.emit('tetris:game:ended');
                     }
 
                     player.resetInterval.clear();
