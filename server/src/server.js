@@ -15,10 +15,11 @@ class Server {
         this.server = http.createServer(this.app);
         this.io = socketIo(this.server, {
             cors: {
-              origin: ['http://localhost', 'http://localhost:3000'],
-              methods: ['GET', 'POST']
+                origin: ["http://localhost:80", "http://localhost:3000"],
+                methods: ['GET', 'POST']
             }
-          });
+        });
+        this.gameManager = new GameManager(this.io);
         this.configureMiddleware();
         this.configureRoutes();
         this.start();
@@ -28,7 +29,7 @@ class Server {
         // Middleware pour autoriser les requêtes CORS et initialiser socket.io et GameManager
         this.app.use((req, res, next) => {
             // Autoriser les requêtes depuis les domaines spécifiés
-            res.setHeader('Access-Control-Allow-Origin', 'http://localhost', 'http://localhost:3000');
+            res.setHeader('Access-Control-Allow-Origin', 'http://localhost:80', 'http://localhost:3000');
             // Autoriser les méthodes HTTP spécifiées
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
             // Autoriser les en-têtes spécifiés
@@ -36,9 +37,6 @@ class Server {
 
             // Ajouter l'objet io à l'objet de la requête
             req.io = this.io;
-
-            // Initialiser le GameManager avec l'instance de socket.io
-            req.gameManager = new GameManager(req.io);
 
             // Passer la requête au prochain middleware
             next();
