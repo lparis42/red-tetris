@@ -219,17 +219,15 @@ class GameManager {
                 player.addPieceToGrid();
 
                 const penalty = player.removeCompletedLines();
-                const score = 0;
                 if (penalty === 1) {
-                    score = 40;
+                    player.score += 40;
                 } else if (penalty === 2) {
-                    score = 100;
+                    player.score += 100;
                 } else if (penalty === 3) {
-                    score = 300;
+                    player.score += 300;
                 } else if (penalty >= 4) {
-                    score = 1200;
+                    player.score += 1200;
                 }
-                player.score += score;
                 if (penalty > 1) {
                     const playersInRoom = this.players.filter(otherPlayer => room.players.includes(otherPlayer.id) && otherPlayer.id !== player.id);
                     playersInRoom.forEach(otherPlayer => {
