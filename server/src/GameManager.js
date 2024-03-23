@@ -35,7 +35,7 @@ class GameManager {
 
     checkCondition(condition, message, socket, cb) {
         if (condition) {
-            cb(null, { error: message });
+            cb({ error: message });
             console.error(`${socket.id} <!> ${message}`);
             return true;
         }
@@ -105,7 +105,7 @@ class GameManager {
         player.roomId = roomId;
 
         socket.join(roomId);
-        cb(null, { error: null });
+        cb({ error: null });
 
         socket.emit('tetris:room:joined', { id: roomId, mode: mode, active: false, leader: player.name });
 
@@ -130,7 +130,7 @@ class GameManager {
         player.roomId = id;
         socket.join(id);
 
-        cb(null, { error: null });
+        cb({ error: null });
 
         const leader = this.players.find(player => player.id === room.host);
         socket.emit('tetris:room:joined', { id: id, mode: room.mode, active: false, leader: leader.name });
@@ -159,7 +159,7 @@ class GameManager {
         }
 
         // Retours
-        cb(null, { error: null });
+        cb({ error: null });
         socket.emit('tetris:room:leave');
         const leader = this.players.find(player => player.id === room.host);
         const playerNames = room.players.map(playerId => this.players.find(player => player.id === playerId).name);
@@ -232,7 +232,7 @@ class GameManager {
                     const playersInRoom = this.players.filter(otherPlayer => room.players.includes(otherPlayer.id) && otherPlayer.id !== player.id);
                     playersInRoom.forEach(otherPlayer => {
                         otherPlayer.penalty += penalty - 1;
-                    });              
+                    });
                 }
 
                 if (player.isGameEnd()) {
@@ -483,7 +483,7 @@ class GameManager {
         player.name = name;
 
         // Returns
-        cb(null, { name: name });
+        cb({ name: name });
 
         console.log(`${socket.id} has been renamed to ${name}`);
     }
@@ -493,7 +493,7 @@ class GameManager {
         for (const roomId in this.rooms) {
             roomList.push({ id: roomId, mode: this.rooms[roomId].mode });
         }
-        cb(null, roomList);
+        cb(roomList);
 
         console.log(`Room list sent to ${socket.id}`);
     }
@@ -536,7 +536,7 @@ class GameManager {
             this.handlePlayerKick(room, playerToKick);
         }
 
-        cb(null, { error: null });
+        cb({ error: null });
 
         const playerSocket = this.io.sockets.sockets.get(playerToKick.id);
         if (playerSocket) {

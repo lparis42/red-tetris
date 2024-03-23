@@ -1,25 +1,19 @@
-import { useEffect, useCallback, useContext } from 'react';
-import { useDispatch } from 'react-redux';
+import { useCallback, useEffect } from 'react';
 import { useInput } from '../../../../core/hooks/useInput';
 import { useSubmit } from '../../../../core/hooks/useSubmit';
-import { SocketContext } from '../../contexts/SocketContext';
-import { validatePlayerName } from '../../validations/validatePlayerName';
-import { updatePlayer } from '../../store.slice';
 import Form from '../../../../core/components/ui/forms/Form';
 import Field from '../../../../core/components/ui/forms/Field';
 import Input from '../../../../core/components/ui/forms/Input';
 import Button from '../../../../core/components/ui/buttons/Button';
-import { useUrlState } from '../../hooks/useUrlState';
+import { usePlayer } from '../../hooks/usePlayer';
 
 // Component -------------------------------------------------------------------
-export default function RenamePlayerForm(
+export default function PlayerRenameForm(
 	{ initialValue }
 )
 {
-	const dispatch = useDispatch();
-	const socket = useContext(SocketContext);
-	const urlState = useUrlState();
-	const { value, setValue, error, setError } = useInput(initialValue, validatePlayerName);
+	const { errors, rename, validateNameFormat } = usePlayer();
+	const { value, setValue, error, setError } = useInput(initialValue, validateNameFormat);
 	const { formRef, submit } = useSubmit();
 
 	useEffect(() =>
@@ -30,25 +24,19 @@ export default function RenamePlayerForm(
 		}
 	}, [ initialValue, submit ]);
 
+	useEffect(() =>
+	{
+		setError(errors.rename);
+	}, [ errors.rename, setError ]);
+
 	const onSubmit = useCallback((event) =>
 	{
 		event.preventDefault();
 
 		const form = new FormData(event.currentTarget);
 
-		socket.emit('tetris:player:rename', { name: form.get('player_name') }, (err, res) =>
-		{
-			const { error, name } = res;
-
-			if ( error )
-			{
-				return setError(error);
-			}
-
-			urlState.set({ player: name });
-			dispatch(updatePlayer({ name }));
-		});
-	}, [ socket, urlState, dispatch, setError ]);
+		rename(form.get('player_name'));
+	}, [ rename ]);
 
 	return (
 		<Form onSubmit={ onSubmit } ref={ formRef }>

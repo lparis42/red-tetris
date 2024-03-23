@@ -1,38 +1,18 @@
-import { useContext, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { SelectTetris, updateGame } from "../store.slice";
-import { SocketContext } from "../contexts/SocketContext";
-import { useUrlState } from "../hooks/useUrlState";
 import Logo from "../../../core/components/logo/Logo";
 import Divider from "../../../core/components/ui/dividers/Divider";
-import CreateGameForm from "./forms/CreateGameForm";
-import JoinGameForm from "./forms/JoinGameForm";
-import RenamePlayerForm from "./forms/RenamePlayerForm";
+import { usePlayer } from "../hooks/usePlayer";
+import { useGame } from "../hooks/useGame";
+import { UrlUtils } from "../utilities/UrlUtils";
+import PlayerRenameForm from "./forms/PlayerRenameForm";
+import GameJoinForm from "./forms/GameJoinForm";
+import GameCreateForm from "./forms/GameCreateForm";
 import Lobby from "./Lobby";
 
 // Component -------------------------------------------------------------------
 export default function Menu()
 {
-	const socket = useContext(SocketContext);
-	const store = useSelector(SelectTetris);
-	const urlState = useUrlState();
-	const dispatch = useDispatch();
-
-	useEffect(() =>
-	{
-		const onRoomJoined = ({ id, mode, active, leader }) =>
-		{
-			dispatch(updateGame({ id, mode, active, leader }));
-			urlState.set({ game: id });
-		};
-
-		socket.on('tetris:room:joined', onRoomJoined);
-
-		return () =>
-		{
-			socket.off('tetris:room:joined');
-		};
-	}, [ socket, urlState, dispatch ]);
+	const { player } = usePlayer();
+	const { game } = useGame();
 
 	return (
 		<div className={ `tetris-menu` }>
@@ -40,19 +20,19 @@ export default function Menu()
 				<Logo />
 			</header>
 			<div className={ `tetris-menu__content` }>
-				{ ( ! store.player.name )
+				{ ( ! player.name )
 					? <>
-						<RenamePlayerForm initialValue={ urlState.get('player') } />
+						<PlayerRenameForm initialValue={ UrlUtils.get('player') } />
 					  </>
-					: ( ! store.game.id )
-					? <>
-						<JoinGameForm initialValue={ urlState.get('game') } />
-						<Divider label='OR' />
-						<CreateGameForm />
-					  </>
-					: <>
-						<Lobby />
-					  </>
+					: ( ! game.id )
+						? <>
+							<GameJoinForm initialValue={ UrlUtils.get('game') } />
+							<Divider label='OR' />
+							<GameCreateForm />
+						</>
+						: <>
+							<Lobby />
+						</>
 				}
 			</div>
 		</div>

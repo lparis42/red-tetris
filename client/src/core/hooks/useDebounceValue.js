@@ -1,20 +1,19 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 // Hook ------------------------------------------------------------------------
-export function useDebounce(
+export function useDebounceValue(
 	value, delay
 )
 {
 	const [ debouncedValue, setDebouncedValue ] = useState(value);
-	const timerRef = useRef();
 
 	useEffect(() =>
 	{
-		timerRef.current = setTimeout(() => setDebouncedValue(value), delay);
+		const timer = setTimeout(() => setDebouncedValue(value), delay);
 
 		return () =>
 		{
-			clearTimeout(timerRef.current);
+			clearTimeout(timer);
 		};
 	}, [ value, delay ]);
 

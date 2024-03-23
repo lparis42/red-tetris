@@ -1,58 +1,45 @@
 import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { SocketContext } from "../contexts/SocketContext";
-import { SelectTetris, updatePlayer, updatePlayers, leaveGame, updateGame } from "../store.slice";
+import { useSocket } from "../../socket/hooks/useSocket";
+import { useGame } from "../hooks/useGame";
 import Menu from "./Menu";
 import Game from "./Game";
-import { useUrlState } from "../hooks/useUrlState";
 
 // Component -------------------------------------------------------------------
-export default function Tetris(
-	{ socket }
-)
+export default function Tetris()
 {
-	const dispatch = useDispatch();
-	const store = useSelector(SelectTetris);
-	const urlState = useUrlState();
+	const { socket, connect, disconnect } = useSocket();
+	const { game, enable, disable } = useGame();
 
 	useEffect(() =>
 	{
-		dispatch(updatePlayer({ id: socket.id }));
-
-		const onRoomUpdated = ({ leader, players }) =>
+		if ( ! socket.isConnected )
 		{
-			dispatch(updateGame({ leader }));
-			dispatch(updatePlayers({ players }));
-		};
-
-		const onRoomLeave = () =>
-		{
-			dispatch(leaveGame());
-			urlState.set({ game: '' });
+			connect();
+			// return () => disconnect();
 		}
+	}, [ socket.isConnected, connect, disconnect ]);
 
-		socket.on('tetris:room:updated', onRoomUpdated);
-		socket.on('tetris:room:leave', onRoomLeave);
-
-		socket.onAny((event, ...args) => { console.log(`Socket:onAny:${event}:`, ...args); }) // Todo: Remove
-
-		return () =>
+	useEffect(() =>
+	{
+		if ( socket.isConnected )
 		{
-			socket.off('tetris:room:updated');
-			socket.off('tetris:room:leave');
+			enable();
+			return () => disable();
+		}
+	}, [ socket.isConnected, enable, disable ]);
 
-			socket.offAny(); // Todo: Remove
-		};
-	}, [ socket, urlState, dispatch ]);
+	// Note: To prevent auto-submit forms before being connected
+	if ( ! socket.isConnected )
+	{
+		return "Connecting Socket..."; // Todo: Display loader
+	}
 
 	return (
 		<div className={ `tetris` }>
-			<SocketContext.Provider value={ socket }>
-				{ ( ! store.game.active )
-					? <Menu />
-					: <Game />
-				}
-			</SocketContext.Provider>
+			{ ( ! game.isActive )
+				? <Menu />
+				: <Game />
+			}
 		</div>
 	);
 }

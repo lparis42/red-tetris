@@ -1,31 +1,16 @@
-import { useContext, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { SocketContext } from "../contexts/SocketContext";
-import { SelectTetris, updateGame } from "../store.slice";
 import Divider from "../../../core/components/ui/dividers/Divider";
 import Table from "../../../core/components/ui/tables/Table";
-import LeaveGameForm from "./forms/LeaveGameForm";
-import KickPlayerForm from './forms/KickPlayerForm';
-import StartGameForm from "./forms/StartGameForm";
+import { useGame } from "../hooks/useGame";
+import { usePlayer } from "../hooks/usePlayer";
+import GameLeaveForm from "./forms/GameLeaveForm";
+import GameKickForm from './forms/GameKickForm';
+import GameStartForm from "./forms/GameStartForm";
 
 // Component -------------------------------------------------------------------
 export default function Lobby()
 {
-	const socket = useContext(SocketContext);
-	const store = useSelector(SelectTetris);
-	const dispatch = useDispatch();
-
-	const isGameLeader = ( store.game.leader === store.player.name );
-
-	useEffect(() =>
-	{
-		socket.on('tetris:game:started', () => dispatch(updateGame({ active: true })));
-
-		return () =>
-		{
-			socket.off('tetris:game:started');
-		};
-	}, [ socket, dispatch ]);
+	const { player } = usePlayer();
+	const { game, isGameLeader } = useGame();
 
 	return (
 		<>
@@ -38,21 +23,21 @@ export default function Lobby()
 						key: `id`,
 						cells: [
 							{ key: `title`, content: `ID` },
-							{ key: `value`, content: store.game.id },
+							{ key: `value`, content: game.id },
 						],
 					},
 					{
 						key: `mode`,
 						cells: [
 							{ key: `title`, content: `Mode` },
-							{ key: `value`, content: store.game.mode },
+							{ key: `value`, content: game.mode },
 						],
 					},
 					{
 						key: `leader`,
 						cells: [
 							{ key: `title`, content: `Leader` },
-							{ key: `value`, content: store.game.leader },
+							{ key: `value`, content: game.leader.name },
 						],
 					},
 				] }
@@ -60,18 +45,18 @@ export default function Lobby()
 
 			<Table
 				header={ [
-					{ title: `Players`, span: ( isGameLeader ) ? `2` : `1` },
+					{ title: `Players`, span: `2` },
 				] }
 				rows={
-					store.game.players.map(({ name }) =>
+					game.players.map(({ name }) =>
 					{
-						if ( isGameLeader && store.player.name !== name )
+						if ( isGameLeader(player.name) && player.name !== name )
 						{
 							return {
 								key: `player-${name}`,
 								cells: [
 									{ key: `name`, content: name },
-									{ key: `action`, content: <KickPlayerForm player={ { name } } /> },
+									{ key: `action`, content: <GameKickForm player={ { name } } /> },
 								],
 							};
 						}
@@ -86,9 +71,9 @@ export default function Lobby()
 				}
 			/>
 
-			<StartGameForm isGameLeader={ isGameLeader } />
+			<GameStartForm />
 			<Divider label='OR' />
-			<LeaveGameForm />
+			<GameLeaveForm />
 		</>
 	);
 }

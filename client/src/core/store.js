@@ -1,11 +1,20 @@
 import { configureStore } from '@reduxjs/toolkit';
-import TetrisReducer from '../features/tetris/store.slice';
+import { SocketReducers } from '../features/socket/store.slice';
+import { SocketMiddleware } from '../features/socket/store.middleware';
+import { TetrisReducers } from '../features/tetris/store.slice';
+import { TetrisMiddleware } from '../features/tetris/store.middleware';
 
 // Store -----------------------------------------------------------------------
 export const store = configureStore(
 {
-	reducer: {
-		'tetris': TetrisReducer,
+	reducer:
+	{
+		'socket': SocketReducers,
+		'tetris': TetrisReducers,
 	},
-	middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
+	middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(
+	[
+		SocketMiddleware,
+		TetrisMiddleware,
+	]),
 });

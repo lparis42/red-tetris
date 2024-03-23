@@ -1,86 +1,66 @@
-import { useEffect, useContext, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { SocketContext } from '../contexts/SocketContext';
-import { SelectTetris, updateGame, updateGrid, updatePiece } from '../store.slice';
+import { useEffect, useMemo } from 'react';
 import Logo from '../../../core/components/logo/Logo';
-import LeaveGameForm from './forms/LeaveGameForm';
+import { usePlayer } from '../hooks/usePlayer';
+import { useGame } from '../hooks/useGame';
+import GameLeaveForm from './forms/GameLeaveForm';
 import Board from './Board';
 
 // Component -------------------------------------------------------------------
-export default function Game() {
-	const socket = useContext(SocketContext);
-	const store = useSelector(SelectTetris);
-	const dispatch = useDispatch();
+export default function Game()
+{
+	const { player } = usePlayer();
+	const { game, action } = useGame();
 
-	useEffect(() => {
-		const onKeyDown = (event) => {
-			const actions = {
+	const self = useMemo(() =>
+	{
+		return game.players.find((p) => p.name === player.name);
+	}, [ game.players ]);
+
+	const { leftPlayers, rightPlayers } = useMemo(() =>
+	{
+		const count = (game.players.length / 2) | 0;
+		const players = game.players.filter((p) => p.name !== player.name);
+
+		return {
+			leftPlayers: players.slice(0, count),
+			rightPlayers: players.slice(count)
+		};
+	}, [ game.players, player.name ]);
+
+	useEffect(() =>
+	{
+		const onKeyDown = (event) =>
+		{
+			const Actions =
+			{
 				'q': 'move-left',
 				's': 'move-down',
 				'd': 'move-right',
 				' ': 'move-space',
 				'a': 'rotate-left',
 				'e': 'rotate-right',
+				'ArrowLeft': 'move-left',
+				'ArrowDown': 'move-down',
+				'ArrowRight': 'move-right',
+				'ArrowUp': 'rotate-right',
 				'Shift': 'hold',
 			};
 
-			if (actions[event.key]) {
-				socket.emit('tetris:game:action', { action: actions[event.key] }, (err, res) => {
-					if (err) {
-						return console.log(`SocketIO:Error: `, err);
-					}
-
-					const { error } = res;
-
-					if (error) {
-						return console.log(error);
-					}
-				});
+			if ( Actions[event.key] /* && self.isAlive */ )
+			{
+				action(Actions[event.key]);
 			}
 		};
-
-		const onGameUpdated = ({ piece, grid }) => {
-			if (piece) {
-				dispatch(updatePiece(piece));
-			}
-
-			if (grid) {
-				dispatch(updateGrid(grid));
-			}
-		};
-
-		const onGameEnded = () => {
-			dispatch(updateGame({ active: false }));
-		};
-
-		socket.on('tetris:game:updated', onGameUpdated);
-		socket.on('tetris:game:ended', onGameEnded);
 
 		document.addEventListener('keydown', onKeyDown);
 
-		return () => {
-			document.removeEventListener('keydown', onKeyDown);
+		return () => document.removeEventListener('keydown', onKeyDown);
+	}, [ action ]);
 
-			socket.off('tetris:game:ended');
-			socket.off('tetris:game:updated');
-		};
-	}, [socket, dispatch]);
-
-	const playersCountSplit = (store.game.players.length / 2) | 0;
-
-	const [rows = 1, cols = 1] = [
+	const [ rows = 1, cols = 1 ] = [
 		[1, 1], [1, 1], [2, 1], [2, 2],
 		[2, 2], [3, 2], [3, 2], [3, 3]
-	][playersCountSplit];
-
-	const { leftPlayers, rightPlayers } = useMemo(() => {
-		const players = store.game.players.filter((player) => player.name !== store.player.name);
-
-		return {
-			leftPlayers: players.slice(0, playersCountSplit),
-			rightPlayers: players.slice(playersCountSplit)
-		};
-	}, [store, playersCountSplit]);
+	][(game.players.length / 2) | 0];
 
 	return (
 		<div className={`tetris-game`}>
@@ -89,21 +69,21 @@ export default function Game() {
 			</header>
 			<div className={`tetris-game__content`}>
 				<div style={{ '--_specters-cols': cols, '--_specters-rows': rows }} className={`tetris-game__specters`} >
-					{leftPlayers.map((player) =>
-						<Board key={player.name} player={player} specter />
+					{ leftPlayers.map((p) =>
+						<Board key={ p.name } player={ p } specter />
 					)}
 				</div>
 
-				<Board player={store.game.players.find((player) => player.name === store.player.name)} />
+				<Board player={ self } />
 
 				<div style={{ '--_specters-cols': cols, '--_specters-rows': rows }} className={`tetris-game__specters`}>
-					{rightPlayers.map((player) =>
-						<Board key={player.name} player={player} specter />
+					{ rightPlayers.map((p) =>
+						<Board key={ p.name } player={ p } specter />
 					)}
 				</div>
 			</div>
 			<footer className={`tetris-game__footer`}>
-				<LeaveGameForm />
+				<GameLeaveForm />
 			</footer>
 		</div>
 	);

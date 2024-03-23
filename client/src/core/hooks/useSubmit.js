@@ -1,11 +1,18 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 
 // Hook ------------------------------------------------------------------------
-export function useSubmit()
+export const useSubmit = () =>
 {
 	const formRef = useRef(null);
 	const [ trigger, setTrigger ] = useState(0);
 
+	// Callback ------------------------
+	const submit = useCallback(() =>
+	{
+		setTrigger((n) => n+1);
+	}, [ setTrigger ]);
+
+	// Effect --------------------------
 	useEffect(() =>
 	{
 		if ( trigger )
@@ -14,12 +21,7 @@ export function useSubmit()
 		}
 	}, [ trigger ]);
 
-	const submit = useCallback(() =>
-	{
-		setTrigger((n) => n+1);
-	}, [ setTrigger ]);
-
-	// Expose
+	// Expose --------------------------
 	return {
 		formRef,
 		submit
