@@ -253,7 +253,7 @@ class GameManager {
                         }
                     }
 
-                    this.resetInterval.clear();
+                    player.resetInterval.clear();
                     return;
                 }
 
