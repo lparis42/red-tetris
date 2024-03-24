@@ -360,6 +360,9 @@ class GameManager {
         if (this.checkCondition(player.id !== room.host, `You are not the host`, socket, cb)) return;
         if (this.checkCondition(player.game, `Game already started`, socket, cb)) return;
 
+        room.pieces = [];
+        room.positions = [];
+
         const piece = new Piece();
         const position = new Position(piece.shape);
         room.addPiece(piece, position);
