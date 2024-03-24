@@ -35,7 +35,9 @@ class GameManager {
 
     checkCondition(condition, message, socket, cb) {
         if (condition) {
-            cb({ error: message });
+            if (cb) {
+                cb({ error: message });
+            }
             console.log(`${socket.id} <!> ${message}`);
             return true;
         }
@@ -277,10 +279,12 @@ class GameManager {
                     }
                     // S'il reste un seul joueur en jeu
                     else if (remainingPlayers.length === 1) {
+                        room.start = false;
                         const winner = remainingPlayers[0];
                         winner.closeGame();
 
                         this.io.to(player.roomId).emit("tetris:game:winner", { name: winner.name });
+                        
                     }
 
                     return;
