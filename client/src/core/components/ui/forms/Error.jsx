@@ -5,7 +5,7 @@ export default function Error(
 )
 {
 	return (
-		<span { ...attrs } className={ `form__error ${className}` } >
+		<span { ...attrs } className={ `text-sm text-red ${className}` } >
 			{ children }
 		</span>
 	);

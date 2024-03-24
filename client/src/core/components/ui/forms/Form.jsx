@@ -6,7 +6,7 @@ const Form = forwardRef((
 ) =>
 {
 	return (
-		<form { ...attrs } ref={ ref } className={ `form rounded ${className}` } >
+		<form { ...attrs } ref={ ref } className={ `flex flex-col gap-md rounded ${className}` } >
 			{ children }
 		</form>
 	);

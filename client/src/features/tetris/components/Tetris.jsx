@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import Loader from '../../../core/components/ui/loaders/Loader';
 import { useSocket } from "../../socket/hooks/useSocket";
 import { useGame } from "../hooks/useGame";
 import Menu from "./Menu";
@@ -31,11 +32,15 @@ export default function Tetris()
 	// Note: To prevent auto-submit forms before being connected
 	if ( ! socket.isConnected )
 	{
-		return "Connecting Socket..."; // Todo: Display loader
+		return (
+			<Loader>
+				Connecting...
+			</Loader>
+		);
 	}
 
 	return (
-		<div className={ `tetris` }>
+		<div className={ `grid p-md` }>
 			{ ( ! game.isActive )
 				? <Menu />
 				: <Game />

@@ -1,7 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import Logo from '../../../core/components/logo/Logo';
+import Modal from '../../../core/components/ui/modals/Modal';
+import Button from '../../../core/components/ui/buttons/Button';
+import Divider from '../../../core/components/ui/dividers/Divider';
 import { usePlayer } from '../hooks/usePlayer';
 import { useGame } from '../hooks/useGame';
+import GameStartForm from './forms/GameStartForm';
 import GameLeaveForm from './forms/GameLeaveForm';
 import Board from './Board';
 
@@ -9,7 +13,7 @@ import Board from './Board';
 export default function Game()
 {
 	const { player } = usePlayer();
-	const { game, action } = useGame();
+	const { game, action, end } = useGame();
 
 	const self = useMemo(() =>
 	{
@@ -46,7 +50,7 @@ export default function Game()
 				'Shift': 'hold',
 			};
 
-			if ( Actions[event.key] /* && self.isAlive */ )
+			if ( Actions[event.key] )
 			{
 				action(Actions[event.key]);
 			}
@@ -63,12 +67,38 @@ export default function Game()
 	][(game.players.length / 2) | 0];
 
 	return (
-		<div className={`tetris-game`}>
-			<header className={`tetris-game__header`}>
+		<div className={`tetris-game grid gap-md`}>
+			<Modal show={ game.players.filter(p => p.isAlive !== null).length === 1 && ! game.players[0].isAlive } full>
+				<div className={ `w-20 flex flex-col gap-md text-center` }>
+					You scored
+					<span className={ `text-xl text-red` }>
+						{ game.players[0].score }
+					</span>
+					points
+					<Divider />
+					<GameStartForm />
+					<Divider label='OR' />
+					<Button onClick={ () => end() }>Back to Lobby</Button>
+				</div>
+			</Modal>
+			<Modal show={ game.winner.name } full>
+				<div className={ `w-20 flex flex-col gap-md text-center` }>
+					Congratulation !
+					<span className={ `text-xl text-red` }>
+						{ game.winner.name }
+					</span>
+					won the game
+					<Divider />
+					<GameStartForm />
+					<Divider label='OR' />
+					<Button onClick={ () => end() }>Back to Lobby</Button>
+				</div>
+			</Modal>
+			<header>
 				<Logo />
 			</header>
-			<div className={`tetris-game__content`}>
-				<div style={{ '--_specters-cols': cols, '--_specters-rows': rows }} className={`tetris-game__specters`} >
+			<div className={`tetris-game__content grid gap-md`}>
+				<div style={{ '--_specters-cols': cols, '--_specters-rows': rows }} className={`tetris-game__specters grid gap-sm`} >
 					{ leftPlayers.map((p) =>
 						<Board key={ p.name } player={ p } specter />
 					)}
@@ -76,13 +106,13 @@ export default function Game()
 
 				<Board player={ self } />
 
-				<div style={{ '--_specters-cols': cols, '--_specters-rows': rows }} className={`tetris-game__specters`}>
+				<div style={{ '--_specters-cols': cols, '--_specters-rows': rows }} className={`tetris-game__specters grid gap-sm`}>
 					{ rightPlayers.map((p) =>
 						<Board key={ p.name } player={ p } specter />
 					)}
 				</div>
 			</div>
-			<footer className={`tetris-game__footer`}>
+			<footer className={`w-20 place-self-center`}>
 				<GameLeaveForm />
 			</footer>
 		</div>

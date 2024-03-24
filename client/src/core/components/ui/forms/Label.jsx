@@ -5,7 +5,7 @@ export default function Label(
 )
 {
 	return (
-		<label { ...attrs } className={ `form__label ${className}` }>
+		<label { ...attrs } className={ `${className}` }>
 			{ children }
 		</label>
 	);

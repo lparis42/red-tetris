@@ -5,7 +5,7 @@ export default function Divider(
 )
 {
 	return (
-		<div { ...attrs } className={ `divider ${className}` }>
+		<div { ...attrs } className={ `divider flex justify-content-center align-items-center ${className}` }>
 			{ label }
 		</div>
 	);

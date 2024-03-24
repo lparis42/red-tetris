@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import Loader from '../../../core/components/ui/loaders/Loader';
 import { GridUtils } from '../utilities/GridUtils';
 import Grid from "./Grid";
 
@@ -7,7 +8,7 @@ export default function Board(
 	{ player, specter }
 )
 {
-	const { name, score = 0, piece, grid: rawGrid } = player;
+	const { name, isAlive, score = 0, piece, grid: rawGrid } = player;
 
 	const grid = useMemo(() =>
 	{
@@ -45,31 +46,31 @@ export default function Board(
 	}, [ piece.hold ]);
 
 	return (
-		<div className={ `tetris-board` }>
-			<div className={ `tetris-board__header` }>
-				<span>{ name }</span>
-				<span>{ score }</span>
+		<div className={ `tetris-board flex flex-col gap-sm ${ ( ! isAlive ) ? 'fade text-red' : '' }` }>
+			<div className={ `flex flex-row gap-sm p-sm b-solid b-sm b-dark` }>
+				<span className={ `flex-grow flex-basis-0 overflow-hidden text-ellipsis` }>{ name }</span>
+				<span className={ `flex-grow flex-basis-0 overflow-hidden text-ellipsis text-right` }>{ score }</span>
 			</div>
 			{ ( ! specter ) &&
-				<div className={ `tetris-board__sidebar` }>
-					<div className={ `tetris-sidebar__preview` }>
+				<div className={ `flex flex-row justify-content-center gap-sm` }>
+					<div className={ `tetris-preview grid b-solid b-md b-dark` }>
 						{ ( previewNext )
-							? <Grid grid={ previewNext } />
-							: <div className={ `tetris-sidebar__preview--unknown` }>?</div>
+							? <Grid grid={ previewNext } ghost className={ `justify-content-center` } />
+							: <div className={ `place-self-center` }>?</div>
 						}
 					</div>
-					<div className={ `tetris-sidebar__preview` }>
+					<div className={ `tetris-preview grid b-solid b-md b-dark` }>
 						{ ( previewHold )
-							? <Grid grid={ previewHold } />
-							: <div className={ `tetris-sidebar__preview--unknown` }>?</div>
+							? <Grid grid={ previewHold } ghost className={ `justify-content-center` } />
+							: <div className={ `place-self-center` }>?</div>
 						}
 					</div>
 				</div>
 			}
-			<div className={ `tetris-board__grid` }>
+			<div className={ `grid flex-grow` }>
 				{ ( grid )
 					? <Grid grid={ grid } />
-					: "Loading..." // Todo: Rendering
+					: <Loader>Loading...</Loader>
 				}
 			</div>
 		</div>

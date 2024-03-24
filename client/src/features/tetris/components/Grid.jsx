@@ -16,15 +16,15 @@ const CellColor =
 
 // Component -------------------------------------------------------------------
 export default function Grid(
-	{ grid }
+	{ grid, ghost, className = '' }
 )
 {
 	return (
-		<div style={ { '--_grid-rows': grid.length, '--_grid-cols': grid[0].length } } className={ `tetris-grid` }>
+		<div style={ { '--_grid-rows': grid.length, '--_grid-cols': grid[0].length } } className={ `tetris-grid flex flex-col ${ className }` }>
 			{ grid.map((row, row_idx) =>
-				<div key={ row_idx } className={ `tetris-grid__row` }>
+				<div key={ row_idx } className={ `flex flex-row justify-content-center` }>
 					{ row.map((cell, col_idx) =>
-						<div key={ col_idx } className={ `tetris-grid__cell bg-${ CellColor[cell] }` } />
+						<div key={ col_idx } className={ `tetris-grid__cell b-solid b-sm ${ (ghost) ? 'b-darkest' : 'b-dark' } bg-${ CellColor[cell] } ${ (!ghost && row_idx === 0) ? 'bt-md bt-dark' : (!ghost && row_idx === grid.length - 1) ? 'bb-md bb-dark' : '' } ${ (!ghost && col_idx === 0) ? 'bl-md bl-dark' : (!ghost && col_idx === row.length - 1) ? 'br-md br-dark' : '' }` } />
 					)}
 				</div>
 			)}

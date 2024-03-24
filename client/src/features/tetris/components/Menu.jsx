@@ -15,11 +15,11 @@ export default function Menu()
 	const { game } = useGame();
 
 	return (
-		<div className={ `tetris-menu` }>
-			<header className={ `tetris-menu__header` }>
+		<div className={ `flex flex-col align-items-center place-self-center` }>
+			<header className={ `mb-lg` }>
 				<Logo />
 			</header>
-			<div className={ `tetris-menu__content` }>
+			<div className={ `flex flex-col gap-md w-20` }>
 				{ ( ! player.name )
 					? <>
 						<PlayerRenameForm initialValue={ UrlUtils.get('player') } />

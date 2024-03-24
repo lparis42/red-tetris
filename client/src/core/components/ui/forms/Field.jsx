@@ -10,7 +10,7 @@ export default function Field(
 	const id = useId();
 
 	return (
-		<div className={ `form__field` }>
+		<div className={ `flex flex-col gap-sm` }>
 			<Label htmlFor={ id }>{ label }</Label>
 			{ React.cloneElement(children, { id }) }
 			{ error && <Error>{ error }</Error> }

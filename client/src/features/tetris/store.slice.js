@@ -162,6 +162,7 @@ const slice = createSlice(
 
 				return {
 					name: name,
+					isAlive: null,
 					piece: {
 						current: {
 							position: null,
@@ -184,14 +185,33 @@ const slice = createSlice(
 		},
 		GameStarted: (state) =>
 		{
-			state.game.isActive = true;
+			state.game.players.forEach(player => player.isAlive = true);
 			state.game.winner.name = initialState.game.winner.name;
+			state.game.isActive = true;
+		},
+		GameEnd: (state) =>
+		{
+			state.game.isActive = false;
 		},
 		GameEnded: (state, { payload }) =>
+		{
+			const { name } = payload;
+			const player = state.game.players.find((player) => player.name === name);
+
+			if ( ! player )
+			{
+				return ;
+			}
+
+			player.isAlive = false;
+		},
+		GameWinner: (state, { payload }) =>
 		{
 			const { winner } = payload;
 
 			state.game.winner.name = winner.name;
+
+			// state.game.isActive = false;
 		},
 		GameKick: () =>
 		{

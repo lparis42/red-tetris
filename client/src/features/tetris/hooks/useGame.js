@@ -65,6 +65,11 @@ export const useGame = () =>
 		dispatch(TetrisActions.GameStart());
 	}, [ dispatch ]);
 
+	const end = useCallback(() =>
+	{
+		dispatch(TetrisActions.GameEnd());
+	}, [ dispatch ]);
+
 	const kick = useCallback((name) =>
 	{
 		dispatch(TetrisActions.GameKick({ name }));
@@ -87,6 +92,7 @@ export const useGame = () =>
 		join,
 		leave,
 		start,
+		end,
 		kick,
 		action,
 	};

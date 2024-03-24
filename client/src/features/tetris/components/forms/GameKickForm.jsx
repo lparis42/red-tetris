@@ -18,7 +18,7 @@ export default function GameKickForm(
 
 	return (
 		<Form onSubmit={ onSubmit }>
-			<Button size='small'><span className={`red`}>Kick</span></Button>
+			<Button size='small' className={ `text-red` }>Kick</Button>
 		</Form>
 	);
 }
