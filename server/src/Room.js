@@ -8,6 +8,7 @@ class Room {
         this.positions = [];
         this.mode = mode;
         this.start = false;
+        this.cols = 10;
     }
 
     addPlayer(playerId) {

@@ -107,6 +107,10 @@ class GameManager {
         this.rooms[roomId] = room;
         player.roomId = roomId;
 
+        if (mode === 'Easy') {
+            room.cols = 12;
+        }
+
         socket.join(roomId);
         cb({ error: null });
 
@@ -199,16 +203,18 @@ class GameManager {
                 player.currentPosition = Object.create(room.positions[level]);
                 player.nextPiece = Object.create(room.pieces[level + 1]);
 
-                if (level >= 0 && level <= 9) {
-                    timer = 800;
-                } else if (level >= 10 && level <= 19) {
-                    timer = 700;
-                } else if (level >= 20 && level <= 29) {
-                    timer = 600;
-                } else if (level >= 30 && level <= 39) {
-                    timer = 500;
-                } else if (level >= 40 && level <= 49) {
-                    timer = 400;
+                if (room.mode === 'Expert') {
+                    if (level >= 0 && level <= 9) {
+                        timer = 800;
+                    } else if (level >= 10 && level <= 19) {
+                        timer = 700;
+                    } else if (level >= 20 && level <= 29) {
+                        timer = 600;
+                    } else if (level >= 30 && level <= 39) {
+                        timer = 500;
+                    } else if (level >= 40 && level <= 49) {
+                        timer = 400;
+                    }
                 }
                 player.resetInterval.clear();
                 player.resetInterval.set(() => {
@@ -221,11 +227,11 @@ class GameManager {
             player.addPenalty();
             player.currentPosition.row += 1;
 
-            if (!player.isPieceCanMove()) {
+            if (!player.isPieceCanMove(room.cols)) {
                 player.currentPosition.row -= 1;
                 player.addPieceToGrid();
 
-                const penalty = player.removeCompletedLines();
+                const penalty = player.removeCompletedLines(room.cols);
                 if (penalty === 1) {
                     player.score += 40;
                 } else if (penalty === 2) {
@@ -242,7 +248,7 @@ class GameManager {
                     });
                 }
 
-                if (player.isGameEnd()) {
+                if (player.isGameEnd(room.cols)) {
                     room.players.forEach(playerId => {
                         const clientSocket = this.io.sockets.sockets.get(playerId);
                         const isCurrentSocketExpert = room.mode === 'Expert' || clientSocket.id === socket.id;
@@ -258,12 +264,13 @@ class GameManager {
 
                         const gridData = {
                             name: player.name,
-                            grid: isCurrentSocketExpert ? player.grid : player.calculateSpectrum()
+                            grid: isCurrentSocketExpert ? player.grid : player.calculateSpectrum(room.cols)
                         };
 
                         const scoreData = {
                             name: player.name,
-                            score: player.score
+                            score: player.score,
+                            level: level
                         };
                         clientSocket.emit('tetris:game:updated', { piece: pieceData, grid: gridData, score: scoreData });
                     });
@@ -284,7 +291,7 @@ class GameManager {
                         winner.closeGame();
 
                         this.io.to(player.roomId).emit("tetris:game:winner", { name: winner.name });
-                        
+
                     }
 
                     return;
@@ -305,16 +312,18 @@ class GameManager {
                 player.currentPosition = Object.create(room.positions[level]);
                 player.nextPiece = Object.create(room.pieces[level + 1]);
 
-                if (level >= 0 && level <= 9) {
-                    timer = 800;
-                } else if (level >= 10 && level <= 19) {
-                    timer = 700;
-                } else if (level >= 20 && level <= 29) {
-                    timer = 600;
-                } else if (level >= 30 && level <= 39) {
-                    timer = 500;
-                } else if (level >= 40 && level <= 49) {
-                    timer = 400;
+                if (room.mode === 'Expert') {
+                    if (level >= 0 && level <= 9) {
+                        timer = 800;
+                    } else if (level >= 10 && level <= 19) {
+                        timer = 700;
+                    } else if (level >= 20 && level <= 29) {
+                        timer = 600;
+                    } else if (level >= 30 && level <= 39) {
+                        timer = 500;
+                    } else if (level >= 40 && level <= 49) {
+                        timer = 400;
+                    }
                 }
                 player.resetInterval.clear();
                 player.hold = 0;
@@ -339,12 +348,13 @@ class GameManager {
 
             const gridData = {
                 name: player.name,
-                grid: isCurrentSocketExpert ? player.grid : player.calculateSpectrum()
+                grid: isCurrentSocketExpert ? player.grid : player.calculateSpectrum(room.cols)
             };
 
             const scoreData = {
                 name: player.name,
-                score: player.score
+                score: player.score,
+                level: level
             };
             clientSocket.emit('tetris:game:updated', { piece: pieceData, grid: gridData, score: scoreData });
         });
@@ -359,7 +369,7 @@ class GameManager {
         if (this.checkCondition(!this.rooms[player.roomId], `Room does not exist`, socket, cb)) return;
 
         const room = this.rooms[player.roomId];
-        const index = room.players.indexOf(socket.id);
+        const index = room.players.indexOf(player.id);
         if (this.checkCondition(index === -1, `You are not in the room`, socket, cb)) return;
         if (this.checkCondition(player.id !== room.host, `You are not the host`, socket, cb)) return;
         if (this.checkCondition(player.game, `Game already started`, socket, cb)) return;
@@ -378,10 +388,9 @@ class GameManager {
         room.start = true;
 
         const roomPlayers = this.players.filter(player => room.players.includes(player.id));
-
         roomPlayers.forEach(player => {
             player.game = true;
-            player.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+            player.grid = Array.from({ length: ROWS }, () => Array(room.cols).fill(0));
             player.currentPiece = Object.create(room.pieces[0]);
             player.currentPosition = Object.create(room.positions[0]);
             player.nextPiece = Object.create(room.pieces[1]);
@@ -408,7 +417,7 @@ class GameManager {
 
                     const gridData = {
                         name: player.name,
-                        grid: isCurrentSocketExpert ? player.grid : player.calculateSpectrum()
+                        grid: isCurrentSocketExpert ? player.grid : player.calculateSpectrum(room.cols)
                     };
 
                     clientSocket.emit('tetris:game:updated', { piece: pieceData, grid: gridData });
@@ -418,6 +427,11 @@ class GameManager {
                 }
             });
         });
+
+        const newHostIndex = (index + 1) % room.players.length;
+        room.host = room.players[newHostIndex];
+        const leader = this.players.find(player => player.id === room.host);
+        this.io.to(player.roomId).emit('tetris:room:updated', { leader: leader.name });
 
         this.io.to(player.roomId).emit("tetris:game:started");
         cb({ error: null });
@@ -441,19 +455,19 @@ class GameManager {
         switch (action) {
             case 'move-left':
                 player.currentPosition.col -= 1;
-                if (!player.isPieceCanMove()) {
+                if (!player.isPieceCanMove(room.cols)) {
                     player.currentPosition.col += 1;
                 }
                 break;
             case 'move-right':
                 player.currentPosition.col += 1;
-                if (!player.isPieceCanMove()) {
+                if (!player.isPieceCanMove(room.cols)) {
                     player.currentPosition.col -= 1;
                 }
                 break;
             case 'move-down':
                 player.currentPosition.row += 1;
-                if (!player.isPieceCanMove()) {
+                if (!player.isPieceCanMove(room.cols)) {
                     player.currentPosition.row -= 1;
                 }
                 break;
@@ -461,13 +475,13 @@ class GameManager {
                 {
                     player.currentPiece.rotatePieceLeft();
                     const positionCopy = Object.create(player.currentPosition);
-                    const overflow = (player.currentPosition.col + (player.currentPiece.shape[0].length - 1)) - COLS + 1;
+                    const overflow = (player.currentPosition.col + (player.currentPiece.shape[0].length - 1)) - room.cols + 1;
 
                     if (overflow > 0) {
                         player.currentPosition.col -= overflow;
                     }
 
-                    if (!player.isPieceCanMove()) {
+                    if (!player.isPieceCanMove(room.cols)) {
                         player.currentPiece.rotatePieceRight();
                         player.currentPosition = positionCopy;
                     }
@@ -477,13 +491,13 @@ class GameManager {
                 {
                     player.currentPiece.rotatePieceRight();
                     const positionCopy = Object.create(player.currentPosition);
-                    const overflow = (player.currentPosition.col + (player.currentPiece.shape[0].length - 1)) - COLS + 1;
+                    const overflow = (player.currentPosition.col + (player.currentPiece.shape[0].length - 1)) - room.cols + 1;
 
                     if (overflow > 0) {
                         player.currentPosition.col -= overflow;
                     }
 
-                    if (!player.isPieceCanMove()) {
+                    if (!player.isPieceCanMove(room.cols)) {
                         player.currentPiece.rotatePieceLeft();
                         player.currentPosition = positionCopy;
                     }
@@ -491,7 +505,7 @@ class GameManager {
                 break;
             case 'move-space':
                 player.currentPosition.row += 1;
-                while (player.isPieceCanMove()) {
+                while (player.isPieceCanMove(room.cols)) {
                     player.currentPosition.row += 1;
                 }
                 player.currentPosition.row -= 1;
