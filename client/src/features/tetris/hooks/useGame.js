@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { TetrisActions, TetrisStore } from '../store.slice';
 
@@ -20,6 +20,16 @@ export const useGame = () =>
 	{
 		return ( game.leader.name === name );
 	}
+
+	// Memo ----------------------------
+	const suggestions = useMemo(() =>
+	{
+		return store.rooms?.map((room) => (
+		{
+			value: room.id,
+			label: `[${ room.mode }] ${ room.id }`,
+		})) ?? [];
+	}, [ store.rooms ]);
 
 	// Callback ------------------------
 	const validateIdFormat = useCallback((id) =>
@@ -43,6 +53,11 @@ export const useGame = () =>
 	const disable = useCallback(() =>
 	{
 		dispatch(TetrisActions.Disable());
+	}, [ dispatch ]);
+
+	const list = useCallback((id) =>
+	{
+		dispatch(TetrisActions.GameList({ id }));
 	}, [ dispatch ]);
 
 	const create = useCallback((id, mode) =>
@@ -80,14 +95,21 @@ export const useGame = () =>
 		dispatch(TetrisActions.GameAction({ type }));
 	}, [ dispatch ]);
 
+	const clear = useCallback((type) =>
+	{
+		dispatch(TetrisActions.ErrorsClear());
+	}, [ dispatch ]);
+
 	// Expose --------------------------
 	return {
 		game,
 		errors,
+		suggestions,
 		isGameLeader,
 		validateIdFormat,
 		enable,
 		disable,
+		list,
 		create,
 		join,
 		leave,
@@ -95,5 +117,6 @@ export const useGame = () =>
 		end,
 		kick,
 		action,
+		clear,
 	};
 };

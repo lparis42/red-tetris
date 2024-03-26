@@ -12,7 +12,7 @@ export default function PlayerRenameForm(
 	{ initialValue }
 )
 {
-	const { errors, rename, validateNameFormat } = usePlayer();
+	const { errors, rename, clear, validateNameFormat } = usePlayer();
 	const { value, setValue, error, setError } = useInput(initialValue, validateNameFormat);
 	const { formRef, submit } = useSubmit();
 
@@ -26,8 +26,12 @@ export default function PlayerRenameForm(
 
 	useEffect(() =>
 	{
-		setError(errors.rename);
-	}, [ errors.rename, setError ]);
+		if ( errors.rename )
+		{
+			setError(errors.rename);
+			clear();
+		}
+	}, [ errors.rename, setError, clear ]);
 
 	const onSubmit = useCallback((event) =>
 	{

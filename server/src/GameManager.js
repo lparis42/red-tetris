@@ -25,7 +25,7 @@ class GameManager {
             socket.on('tetris:game:start', (cb) => this.handleRoomGameStart(socket, cb));
             socket.on('tetris:game:action', (payload, cb) => this.handleRoomGameAction(socket, payload, cb));
             socket.on('tetris:player:rename', (payload, cb) => this.handlePlayerRename(socket, payload, cb));
-            socket.on('tetris:room:list', (cb) => this.handleRoomList(socket, cb));
+            socket.on('tetris:room:list', (payload, cb) => this.handleRoomList(socket, payload, cb));
             socket.on('tetris:room:kick', (payload, cb) => this.handleRoomKick(socket, payload, cb));
 
             socket.on('disconnect', () => this.handleDisconnect(socket));
@@ -565,12 +565,26 @@ class GameManager {
         console.log(`${socket.id} has been renamed to ${name}`);
     }
 
-    handleRoomList(socket, cb) {
-        const roomList = [];
-        for (const roomId in this.rooms) {
-            roomList.push({ id: roomId, mode: this.rooms[roomId].mode });
+    handleRoomList(socket, payload, cb)
+    {
+        if ( typeof cb !== 'function' )
+        {
+            return ;
         }
-        cb(roomList);
+
+        const { id: prefix } = payload ?? {};
+
+        const rooms = [];
+
+        for (const roomId in this.rooms)
+        {
+            if ( roomId.startsWith(String(prefix)) )
+            {
+                rooms.push({ id: roomId, mode: this.rooms[roomId].mode });
+            }
+        }
+
+        cb({ rooms });
 
         console.log(`Room list sent to ${socket.id}`);
     }

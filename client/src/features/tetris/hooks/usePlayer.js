@@ -35,6 +35,11 @@ export const usePlayer = () =>
 		dispatch(TetrisActions.PlayerRename({ name }));
 	}, [ dispatch ]);
 
+	const clear = useCallback(() =>
+	{
+		dispatch(TetrisActions.ErrorsClear());
+	}, [ dispatch ]);
+
 	// Effect --------------------------
 	useEffect(() =>
 	{
@@ -47,5 +52,6 @@ export const usePlayer = () =>
 		errors,
 		validateNameFormat,
 		rename,
+		clear,
 	};
 };

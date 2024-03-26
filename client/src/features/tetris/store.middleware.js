@@ -81,8 +81,10 @@ export const TetrisMiddleware = (store) => (next) => (action) =>
 		socket.off('tetris:room:joined');
 		socket.off('tetris:room:updated');
 		socket.off('tetris:room:leave');
+		socket.off('tetris:game:started');
 		socket.off('tetris:game:updated');
 		socket.off('tetris:game:ended');
+		socket.off('tetris:game:winner');
 
 		return next(action);
 	}
@@ -101,6 +103,27 @@ export const TetrisMiddleware = (store) => (next) => (action) =>
 			}
 
 			action.payload.name = name;
+
+			return next(action);
+		});
+
+		return ;
+	}
+
+	if ( TetrisActions.GameList.match(action) )
+	{
+		const { id } = action.payload;
+
+		socket.emit('tetris:room:list', { id }, (response) =>
+		{
+			const { rooms } = response;
+
+			if ( rooms.length === 0 )
+			{
+				store.dispatch(TetrisActions.GameJoinFailed({ error: `No room found.` }));
+			}
+
+			action.payload = { rooms };
 
 			return next(action);
 		});
@@ -130,6 +153,7 @@ export const TetrisMiddleware = (store) => (next) => (action) =>
 	if ( TetrisActions.GameJoin.match(action) )
 	{
 		const { id } = action.payload;
+
 		socket.emit('tetris:room:join', { id }, (response) =>
 		{
 			const { error } = response;

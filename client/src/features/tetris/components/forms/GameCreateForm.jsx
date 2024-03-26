@@ -10,13 +10,17 @@ import { useGame } from '../../hooks/useGame';
 // Component -------------------------------------------------------------------
 export default function GameCreateForm()
 {
-	const { errors, create, validateIdFormat } = useGame();
+	const { errors, create, clear, validateIdFormat } = useGame();
 	const { value, setValue, error, setError } = useInput('', validateIdFormat);
 
 	useEffect(() =>
 	{
-		setError(errors.create.id);
-	}, [ errors.create.id, setError ]);
+		if ( errors.create.id )
+		{
+			setError(errors.create.id);
+			clear();
+		}
+	}, [ errors.create.id, setError, clear ]);
 
 	const onSubmit = (event) =>
 	{

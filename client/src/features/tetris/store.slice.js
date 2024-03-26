@@ -11,6 +11,7 @@ const initialState =
 		},
 		join: null,
 	},
+	rooms: null,
 	player: {
 		name: null,
 	},
@@ -104,6 +105,12 @@ const slice = createSlice(
 			const { error } = payload;
 
 			state.errors.rename = error;
+		},
+		GameList: (state, { payload }) =>
+		{
+			const { rooms } = payload;
+
+			state.rooms = rooms;
 		},
 		GameCreate: () =>
 		{
