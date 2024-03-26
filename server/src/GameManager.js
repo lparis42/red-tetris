@@ -565,29 +565,19 @@ class GameManager {
         console.log(`${socket.id} has been renamed to ${name}`);
     }
 
-    handleRoomList(socket, payload, cb)
-    {
-        if ( typeof cb !== 'function' )
-        {
-            return ;
-        }
-
-        const { id: prefix } = payload ?? {};
-
+    handleRoomList(socket, payload, cb) {
+        const { id } = payload;
         const rooms = [];
-
-        for (const roomId in this.rooms)
-        {
-            if ( roomId.startsWith(String(prefix)) )
-            {
+        for (const roomId in this.rooms) {
+            if (roomId.includes(id)) {
                 rooms.push({ id: roomId, mode: this.rooms[roomId].mode });
             }
         }
-
-        cb({ rooms });
-
+        cb({rooms: rooms});
+    
         console.log(`Room list sent to ${socket.id}`);
     }
+    
 
     // Gérer le renvoi d'un joueur de la salle
     handleRoomKick(socket, payload, cb) {
