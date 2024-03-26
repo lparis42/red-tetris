@@ -5,7 +5,6 @@ const Piece = require('./Piece');
 const Position = require('./Position');
 
 const ROWS = 20;
-const COLS = 10;
 
 class GameManager {
     constructor(io) {
@@ -290,7 +289,11 @@ class GameManager {
                         const winner = remainingPlayers[0];
                         winner.closeGame();
 
-                        this.io.to(player.roomId).emit("tetris:game:winner", { name: winner.name });
+                        const scoreData = {
+                            name: winner.name,
+                            score: winner.score,
+                        };
+                        this.io.to(player.roomId).emit("tetris:game:winner", { scoreData });
 
                     }
 
