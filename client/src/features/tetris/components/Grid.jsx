@@ -12,6 +12,13 @@ const CellColor =
 	 '5': `yellow`,
 	 '6': `cyan`,
 	 '7': `purple`,
+	 '11': `transparent-red`,
+	 '12': `transparent-green`,
+	 '13': `transparent-blue`,
+	 '14': `transparent-orange`,
+	 '15': `transparent-yellow`,
+	 '16': `transparent-cyan`,
+	 '17': `transparent-purple`,
 };
 
 // Component -------------------------------------------------------------------

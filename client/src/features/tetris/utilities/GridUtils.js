@@ -1,6 +1,58 @@
 
 // Function --------------------------------------------------------------------
-function getGridPreview(grid)
+function canMoveDown(grid, piece)
+{
+	const ghostPosition =
+	{
+		x: piece.position.x,
+		y: piece.position.y + 1,
+	};
+
+	for ( let py = 0 ; py < piece.content.length ; py++ )
+	{
+		for ( let px = 0 ; px < piece.content[0].length ; px++ )
+		{
+			if ( piece.content[py][px] !== 0 )
+			{
+				const gx = ghostPosition.x + px;
+				const gy = ghostPosition.y + py;
+
+				if ( gy >= grid.length || ( gy >= 0 && grid[gy][gx] !== 0 ) )
+				{
+					return false;
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
+function placePiece(grid, piece)
+{
+	const gridWithPiece = grid.map((row) => [ ...row ]);
+
+	for ( let py = 0 ; py < piece.content.length ; py++ )
+	{
+		for ( let px = 0 ; px < piece.content[0].length ; px++ )
+		{
+			if ( piece.content[py][px] !== 0 )
+			{
+				const gx = piece.position.x + px;
+				const gy = piece.position.y + py;
+
+				if ( gy >= 0 )
+				{
+					gridWithPiece[gy][gx] = piece.content[py][px];
+				}
+			}
+		}
+	}
+
+	return gridWithPiece;
+}
+
+function getPiecePreview(grid)
 {
 	let preview = grid.map((row) => [ ...row ]);
 
@@ -21,31 +73,29 @@ function getGridPreview(grid)
 
 function getGridWithCurrentPiece(grid, piece)
 {
-	const gridWithPiece = grid.map((row) => [ ...row ]);
+	return placePiece(grid, piece);
+};
 
-	for ( let i = 0 ; i < piece.content.length ; i++ )
+function getGridWithCurrentPieceGhost(grid, piece)
+{
+	const ghostPiece =
 	{
-		for ( let j = 0 ; j < piece.content[0].length ; j++ )
-		{
-			if ( piece.content[i][j] !== 0 )
-			{
-				const px = piece.position.x + j;
-				const py = piece.position.y + i;
+		content: piece.content.map(row => row.map(c => ( c > 0 ) ? c + 10 : c)),
+		position: { ...piece.position },
+	};
 
-				if ( py >= 0 )
-				{
-					gridWithPiece[py][px] = piece.content[i][j];
-				}
-			}
-		}
+	while ( canMoveDown(grid, ghostPiece) )
+	{
+		ghostPiece.position.y += 1;
 	}
 
-	return gridWithPiece;
+	return placePiece(grid, ghostPiece);
 };
 
 // Utils -----------------------------------------------------------------------
 export const GridUtils =
 {
-	getGridPreview,
+	getPiecePreview,
 	getGridWithCurrentPiece,
+	getGridWithCurrentPieceGhost,
 };

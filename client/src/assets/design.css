@@ -3,29 +3,26 @@
  */
 :root
 {
-	--color-transparent: hsla(0 0% 0% / 0);
-	--color-modal: hsla(0 0% 3% / .75);
+	--color-darkest: hsl(0 0% 3%);
+	--color-darker: hsl(0 0% 5%);
+	--color-dark: hsl(0 0% 9%);
 
-	--color-darkest: hsl(0, 0%, 3%);
-	--color-darker: hsl(0, 0%, 5%);
-	--color-dark: hsl(0, 0%, 9%);
+	--color-dim: hsl(0 0% 50%);
+	--color-dimer: hsl(0 0% 40%);
+	--color-dimest: hsl(0 0% 30%);
 
-	--color-dim: hsl(0, 0%, 50%);
-	--color-dimer: hsl(0, 0%, 40%);
-	--color-dimest: hsl(0, 0%, 30%);
+	--color-light: hsl(0 0% 85%);
+	--color-lighter: hsl(0 0% 90%);
+	--color-lightest: hsl(0 0% 95%);
 
-	--color-light: hsl(0, 0%, 85%);
-	--color-lighter: hsl(0, 0%, 90%);
-	--color-lightest: hsl(0, 0%, 95%);
-
-	--color-gray: hsl(0, 0%, 35%);
-	--color-red: hsl(0, 61%, 56%);
-	--color-blue: hsl(212, 53%, 46%);
-	--color-green: hsl(93, 48%, 51%);
-	--color-orange: hsl(27, 67%, 58%);
-	--color-purple: hsl(261, 54%, 59%);
-	--color-yellow: hsl(56, 87%, 56%);
-	--color-cyan: hsl(160, 63%, 53%);
+	--color-gray: hsl(0 0% 35%);
+	--color-red: hsl(0 61% 56%);
+	--color-blue: hsl(212 53% 46%);
+	--color-green: hsl(93 48% 51%);
+	--color-orange: hsl(27 67% 58%);
+	--color-purple: hsl(261 54% 59%);
+	--color-yellow: hsl(56 87% 56%);
+	--color-cyan: hsl(160 63% 53%);
 
 	--font-size-base: 1rem;
 
@@ -459,14 +456,23 @@ h3 { font-size: calc(var(--font-size-base) * 1.5); }
 .bg-lighter  { background: var(--color-lighter); }
 .bg-light    { background: var(--color-light); }
 
-.bg-gray     { background: var(--color-gray); }
-.bg-red      { background: var(--color-red); }
-.bg-green    { background: var(--color-green); }
-.bg-blue     { background: var(--color-blue); }
-.bg-orange   { background: var(--color-orange); }
-.bg-yellow   { background: var(--color-yellow); }
-.bg-cyan     { background: var(--color-cyan); }
-.bg-purple   { background: var(--color-purple); }
+.bg-gray   { background: var(--color-gray); }
+.bg-red    { background: var(--color-red); }
+.bg-green  { background: var(--color-green); }
+.bg-blue   { background: var(--color-blue); }
+.bg-orange { background: var(--color-orange); }
+.bg-yellow { background: var(--color-yellow); }
+.bg-cyan   { background: var(--color-cyan); }
+.bg-purple { background: var(--color-purple); }
+
+.bg-transparent-gray   { --transparency: 30%; background: color-mix(in srgb, var(--color-gray) var(--transparency, 50%), transparent); }
+.bg-transparent-red    { --transparency: 30%; background: color-mix(in srgb, var(--color-red) var(--transparency, 50%), transparent); }
+.bg-transparent-green  { --transparency: 30%; background: color-mix(in srgb, var(--color-green) var(--transparency, 50%), transparent); }
+.bg-transparent-blue   { --transparency: 30%; background: color-mix(in srgb, var(--color-blue) var(--transparency, 50%), transparent); }
+.bg-transparent-orange { --transparency: 30%; background: color-mix(in srgb, var(--color-orange) var(--transparency, 50%), transparent); }
+.bg-transparent-yellow { --transparency: 30%; background: color-mix(in srgb, var(--color-yellow) var(--transparency, 50%), transparent); }
+.bg-transparent-cyan   { --transparency: 30%; background: color-mix(in srgb, var(--color-cyan) var(--transparency, 50%), transparent); }
+.bg-transparent-purple { --transparency: 30%; background: color-mix(in srgb, var(--color-purple) var(--transparency, 50%), transparent); }
 
  /**
  * Components

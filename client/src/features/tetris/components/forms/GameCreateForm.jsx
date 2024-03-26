@@ -30,7 +30,7 @@ export default function GameCreateForm()
 	return (
 		<Form onSubmit={ onSubmit }>
 			<Field label="Game Mode" error={ errors.create.mode }>
-				<Select name='game_mode' options={ [ { label: 'Standard' }, { label: 'Expert' } ] } />
+				<Select name='game_mode' options={ [ { label: 'Standard' }, { label: 'Easy' }, { label: 'Expert' } ] } />
 			</Field>
 			<Field label="Game ID ( optional )" error={ error }>
 				<Input name='game_id' value={ value } onChange={ (e) => setValue(e.target.value) } />

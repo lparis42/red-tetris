@@ -23,8 +23,15 @@ export const TetrisMiddleware = (store) => (next) => (action) =>
 
 		socket.on('tetris:room:updated', ({ leader, players }) =>
 		{
-			store.dispatch(TetrisActions.GameUpdateInfos({ leader: { name: leader } }));
-			store.dispatch(TetrisActions.GameUpdatePlayers({ players }));
+			if ( leader )
+			{
+				store.dispatch(TetrisActions.GameUpdateInfos({ leader: { name: leader } }));
+			}
+
+			if ( players )
+			{
+				store.dispatch(TetrisActions.GameUpdatePlayers({ players }));
+			}
 		});
 
 		socket.on('tetris:room:leave', () =>
@@ -61,9 +68,9 @@ export const TetrisMiddleware = (store) => (next) => (action) =>
 			store.dispatch(TetrisActions.GameEnded({ name }));
 		});
 
-		socket.on('tetris:game:winner', ({ name }) =>
+		socket.on('tetris:game:winner', ({ name, score }) =>
 		{
-			store.dispatch(TetrisActions.GameWinner({ winner: { name } }));
+			store.dispatch(TetrisActions.GameWinner({ winner: { name, score } }));
 		});
 
 		return next(action);

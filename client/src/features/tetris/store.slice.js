@@ -23,10 +23,13 @@ const initialState =
 		},
 		winner: {
 			name: null,
+			score: null,
 		},
 		players: [
 			// {
 			// 	name: `John`,
+			// 	level: 13,
+			//  score: 6594,
 			// 	piece: {
 			// 		current:
 			// 		{
@@ -210,6 +213,7 @@ const slice = createSlice(
 			const { winner } = payload;
 
 			state.game.winner.name = winner.name;
+			state.game.winner.score = winner.score;
 
 			// state.game.isActive = false;
 		},
@@ -223,7 +227,7 @@ const slice = createSlice(
 		},
 		GameUpdateScore: (state, { payload }) =>
 		{
-			const { name, score } = payload;
+			const { name, score, level } = payload;
 			const player = state.game.players.find((player) => player.name === name);
 
 			if ( ! player )
@@ -232,6 +236,7 @@ const slice = createSlice(
 			}
 
 			player.score = score;
+			player.level = level;
 		},
 		GameUpdatePiece: (state, { payload }) =>
 		{

@@ -87,7 +87,7 @@ export default function Game()
 					<span className={ `text-xl text-red` }>
 						{ game.winner.name }
 					</span>
-					won the game
+					won the game with <strong className={`text-red`}>{ game.winner.score }</strong> points
 					<Divider />
 					<GameStartForm />
 					<Divider label='OR' />
@@ -100,15 +100,15 @@ export default function Game()
 			<div className={`tetris-game__content grid gap-md`}>
 				<div style={{ '--_specters-cols': cols, '--_specters-rows': rows }} className={`tetris-game__specters grid gap-sm`} >
 					{ leftPlayers.map((p) =>
-						<Board key={ p.name } player={ p } specter />
+						<Board key={ p.name } player={ p } />
 					)}
 				</div>
 
-				<Board player={ self } />
+				<Board player={ self } mode={ game.mode } />
 
 				<div style={{ '--_specters-cols': cols, '--_specters-rows': rows }} className={`tetris-game__specters grid gap-sm`}>
 					{ rightPlayers.map((p) =>
-						<Board key={ p.name } player={ p } specter />
+						<Board key={ p.name } player={ p } />
 					)}
 				</div>
 			</div>

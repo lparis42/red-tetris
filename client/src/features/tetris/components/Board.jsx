@@ -5,10 +5,10 @@ import Grid from "./Grid";
 
 // Component -------------------------------------------------------------------
 export default function Board(
-	{ player, specter }
+	{ player, mode }
 )
 {
-	const { name, isAlive, score = 0, piece, grid: rawGrid } = player;
+	const { name, isAlive, score = 0, level = 0, piece, grid: rawGrid } = player;
 
 	const grid = useMemo(() =>
 	{
@@ -22,8 +22,15 @@ export default function Board(
 			return rawGrid;
 		}
 
-		return GridUtils.getGridWithCurrentPiece(rawGrid, piece.current);
-	}, [ rawGrid, piece ]);
+		let gridTmp = rawGrid;
+
+		if ( mode === 'Easy' )
+		{
+			gridTmp = GridUtils.getGridWithCurrentPieceGhost(rawGrid, piece.current);
+		}
+
+		return GridUtils.getGridWithCurrentPiece(gridTmp, piece.current);
+	}, [ rawGrid, piece, mode ]);
 
 	const previewNext = useMemo(() =>
 	{
@@ -32,7 +39,7 @@ export default function Board(
 			return null;
 		}
 
-		return GridUtils.getGridPreview(piece.next);
+		return GridUtils.getPiecePreview(piece.next);
 	}, [ piece.next ]);
 
 	const previewHold = useMemo(() =>
@@ -42,16 +49,17 @@ export default function Board(
 			return null;
 		}
 
-		return GridUtils.getGridPreview(piece.hold);
+		return GridUtils.getPiecePreview(piece.hold);
 	}, [ piece.hold ]);
 
 	return (
 		<div className={ `tetris-board flex flex-col gap-sm ${ ( ! isAlive ) ? 'fade text-red' : '' }` }>
 			<div className={ `flex flex-row gap-sm p-sm b-solid b-sm b-dark` }>
-				<span className={ `flex-grow flex-basis-0 overflow-hidden text-ellipsis` }>{ name }</span>
-				<span className={ `flex-grow flex-basis-0 overflow-hidden text-ellipsis text-right` }>{ score }</span>
+				<span>{ level }</span>
+				<span className={ `flex-grow flex-basis-0 overflow-hidden text-ellipsis text-center` }>{ name }</span>
+				<span className={ `overflow-hidden text-ellipsis` }>{ score }</span>
 			</div>
-			{ ( ! specter ) &&
+			{ ( previewNext || previewHold ) &&
 				<div className={ `flex flex-row justify-content-center gap-sm` }>
 					<div className={ `tetris-preview grid b-solid b-md b-dark` }>
 						{ ( previewNext )
