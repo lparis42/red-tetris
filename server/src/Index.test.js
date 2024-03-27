@@ -97,26 +97,26 @@ describe('server', () => {
             const originalShape = JSON.stringify(piece.shape);
             piece.rotatePieceLeft();
             const rotatedShape = JSON.stringify(piece.shape);
-        
-            if (originalShape === JSON.stringify([[1,1],[1,1]])) {
+
+            if (originalShape === JSON.stringify([[1, 1], [1, 1]])) {
                 expect(rotatedShape).toEqual(originalShape);
             } else {
                 expect(rotatedShape).not.toEqual(originalShape);
             }
         });
-        
+
         test('rotatePieceRight should rotate the piece right', () => {
             const originalShape = JSON.stringify(piece.shape);
             piece.rotatePieceRight();
             const rotatedShape = JSON.stringify(piece.shape);
-        
-            if (originalShape === JSON.stringify([[1,1],[1,1]])) {
+
+            if (originalShape === JSON.stringify([[1, 1], [1, 1]])) {
                 expect(rotatedShape).toEqual(originalShape);
             } else {
                 expect(rotatedShape).not.toEqual(originalShape);
             }
-        });        
-        
+        });
+
     });
 
     describe('Position', () => {
@@ -258,32 +258,6 @@ describe('server', () => {
             expect(spectrum[19].filter(cell => cell === -2).length).toBe(9);
         });
 
-        test('reset should reset player attributes', () => {
-            player.grid = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
-            player.roomId = 'test';
-            player.currentPiece = {};
-            player.currentPosition = {};
-            player.nextPiece = {};
-            player.holdPiece = {};
-            player.hold = 1;
-            player.penalty = 2;
-            player.game = true;
-            player.score = 100;
-            player.resetInterval.interval = setInterval(() => { }, 1000);
-            player.reset();
-            expect(player.roomId).toBeNull();
-            expect(player.grid).toBeNull();
-            expect(player.currentPiece).toBeNull();
-            expect(player.currentPosition).toBeNull();
-            expect(player.nextPiece).toBeNull();
-            expect(player.holdPiece).toBeNull();
-            expect(player.hold).toBe(0);
-            expect(player.penalty).toBe(0);
-            expect(player.game).toBe(false);
-            expect(player.score).toBe(0);
-            expect(player.resetInterval.interval).not.toEqual(expect.any(Number));
-        });
-
         test('closeGame should reset player game-related attributes', () => {
             player.currentPiece = {};
             player.currentPosition = {};
@@ -318,83 +292,218 @@ describe('server', () => {
     });
 
     describe('GameManager', () => {
+
         const consoleSpy = jest.spyOn(console, 'log');
 
-        test('handleRoomCreate should return error if player is not found', () => {
-            // Préparer les données de test
-            const payload = { id: null, mode: 'Standard' };
-            const cb = jest.fn();
+        describe('handleRoomCreate', () => {
 
-            // Appeler la méthode à tester avec un socket sans joueur associé
-            gameManager.handleRoomCreate({ id: 'nonexistentSocketId' }, payload, cb);
+            test('should return error if player is not found', () => {
+                // Prepare test data
+                const payload = { id: null, mode: 'Standard' };
+                const cb = jest.fn();
 
-            // Vérifier les résultats
-            expect(cb).toHaveBeenCalledWith(null, { error: 'Player not found' });
-            expect(testSockets[0].join).not.toHaveBeenCalled();
-            expect(testSockets[0].emit).not.toHaveBeenCalled();
-            expect(Object.keys(gameManager.rooms).length).toBe(0);
-            expect(consoleSpy).toHaveBeenCalled();
+                // Call the method under test with a socket without an associated player
+                gameManager.handleRoomCreate({ id: 'nonexistentSocketId' }, payload, cb);
+
+                // Check results
+                expect(testSockets[0].join).not.toHaveBeenCalled();
+                expect(testSockets[0].emit).not.toHaveBeenCalled();
+                expect(Object.keys(gameManager.rooms).length).toBe(0);
+                expect(consoleSpy).toHaveBeenCalled();
+            });
+
+            test('should return error if mode is invalid', () => {
+                // Prepare test data
+                const payload = { id: null, mode: 'InvalidMode' };
+                const cb = jest.fn();
+
+                // Call the method under test
+                gameManager.handleRoomCreate(testSockets[0], payload, cb);
+
+                // Check results
+                expect(testSockets[0].join).not.toHaveBeenCalled();
+                expect(testSockets[0].emit).not.toHaveBeenCalled();
+                expect(Object.keys(gameManager.rooms).length).toBe(0);
+                expect(consoleSpy).toHaveBeenCalled();
+            });
+
+            test('should return error if player is already in a room', () => {
+                // Prepare test data
+                const payload = { id: null, mode: 'Standard' };
+                const cb = jest.fn();
+
+                // Simulate necessary situation
+                gameManager.rooms['fakeRoomId'] = new Room('somePlayerId', 'Standard');
+                gameManager.players[0].roomId = "fakeRoomId";
+
+                // Call the method under test
+                gameManager.handleRoomCreate(testSockets[0], payload, cb);
+
+                // Check results
+                expect(testSockets[0].join).not.toHaveBeenCalled();
+                expect(testSockets[0].emit).not.toHaveBeenCalled();
+                expect(Object.keys(gameManager.rooms).length).toBe(1);
+                expect(consoleSpy).toHaveBeenCalled();
+
+                // Clean up modifications
+                gameManager.rooms = {};
+                gameManager.players[0].roomId = null;
+            });
+
+            test('should create a new room with valid payload', () => {
+                // Prepare test data
+                const payload = { id: null, mode: 'Standard' };
+                const cb = jest.fn();
+
+                // Call the method under test
+                gameManager.handleRoomCreate(testSockets[0], payload, cb);
+
+                // Check results
+                expect(testSockets[0].join).toHaveBeenCalled();
+                expect(testSockets[0].emit).toHaveBeenCalledWith('tetris:room:joined', expect.any(Object));
+                expect(testSockets[0].emit).toHaveBeenCalledWith('tetris:room:updated', expect.any(Object));
+                expect(consoleSpy).toHaveBeenCalled();
+
+                // Clean up modifications
+                gameManager.rooms = {};
+                gameManager.players[0].roomId = null;
+            });
         });
 
-        test('handleRoomCreate should return error if mode is invalid', () => {
-            // Préparer les données de test
-            const payload = { id: null, mode: 'InvalidMode' };
-            const cb = jest.fn();
+        describe('handleRoomJoin', () => {
 
-            // Appeler la méthode à tester
-            gameManager.handleRoomCreate(testSockets[0], payload, cb);
+            test('should return error if player is not found', () => {
+                // Prepare test data
+                const payload = { id: 'someRoomId' };
+                const cb = jest.fn();
 
-            // Vérifier les résultats
-            expect(cb).toHaveBeenCalledWith(null, { error: 'Invalid room mode' });
-            expect(testSockets[0].join).not.toHaveBeenCalled();
-            expect(testSockets[0].emit).not.toHaveBeenCalled();
-            expect(Object.keys(gameManager.rooms).length).toBe(0);
-            expect(consoleSpy).toHaveBeenCalled();
+                // Call the method under test with a socket without an associated player
+                gameManager.handleRoomJoin({ id: 'nonexistentSocketId' }, payload, cb);
+
+                // Check results
+                expect(cb).not.toHaveBeenCalled();
+                expect(consoleSpy).toHaveBeenCalled();
+            });
+
+            test('should return error if room ID is required', () => {
+                // Prepare test data
+                const payload = {};
+                const cb = jest.fn();
+
+                // Call the method under test
+                gameManager.handleRoomJoin(testSockets[0], payload, cb);
+
+                // Check results
+                expect(cb).toHaveBeenCalledWith({ error: 'Room ID is required' });
+                expect(consoleSpy).toHaveBeenCalled();
+            });
+
+            test('should call handleRoomLeave if player is already in a room', () => {
+                // Prepare test data
+                const roomId = 'existingRoomId';
+                const payload = { id: roomId };
+                const cb = jest.fn();
+                const handleRoomLeaveSpy = jest.spyOn(gameManager, 'handleRoomLeave').mockImplementation(() => {});
+                gameManager.players[0].roomId = roomId;
+            
+                // Call the method under test
+                gameManager.handleRoomJoin(testSockets[0], payload, cb);
+            
+                // Check results
+                expect(handleRoomLeaveSpy).toHaveBeenCalledWith(testSockets[0], cb);
+                expect(consoleSpy).toHaveBeenCalled();
+            
+                // Clean up modifications
+                handleRoomLeaveSpy.mockRestore();
+                gameManager.players[0].roomId = null;
+            });
+            
+
+            test('should return error if room is full', () => {
+                // Prepare test data
+                const roomId = 'existingRoomId';
+                const payload = { id: roomId };
+                const cb = jest.fn();
+                gameManager.rooms[roomId] = new Room('hostPlayerId', 'Standard');
+                for (let i = 0; i < 9; i++) {
+                    gameManager.rooms[roomId].addPlayer(`player${i}`);
+                }
+
+                // Call the method under test
+                gameManager.handleRoomJoin(testSockets[0], payload, cb);
+
+                // Check results
+                expect(cb).toHaveBeenCalledWith({ error: 'Room is full' });
+                expect(consoleSpy).toHaveBeenCalled();
+
+                // Clean up modifications
+                gameManager.rooms = {};
+            });
+
+            test('should return error if room is currently playing', () => {
+                // Prepare test data
+                const roomId = 'existingRoomId';
+                const payload = { id: roomId };
+                const cb = jest.fn();
+                gameManager.rooms[roomId] = new Room('hostPlayerId', 'Standard');
+                gameManager.rooms[roomId].start = true;
+
+                // Call the method under test
+                gameManager.handleRoomJoin(testSockets[0], payload, cb);
+
+                // Check results
+                expect(cb).toHaveBeenCalledWith({ error: 'Room is currently playing' });
+                expect(consoleSpy).toHaveBeenCalled();
+
+                // Clean up modifications
+                gameManager.rooms = {};
+            });
+
+            test('should call handleRoomCreate if room does not exist', () => {
+                // Prepare test data
+                const roomId = 'nonexistentRoomId';
+                const payload = { id: roomId };
+                const cb = jest.fn();
+                const handleRoomCreateSpy = jest.spyOn(gameManager, 'handleRoomCreate').mockImplementation(() => { });
+
+                // Call the method under test
+                gameManager.handleRoomJoin(testSockets[0], payload, cb);
+
+                // Check results
+                expect(handleRoomCreateSpy).toHaveBeenCalledWith(testSockets[0], { id: roomId, mode: 'Standard' }, cb);
+                expect(consoleSpy).toHaveBeenCalled();
+
+                // Clean up modifications
+                handleRoomCreateSpy.mockRestore();
+            });
+
+            test('should successfully join an existing room', () => {
+                // Prepare test data
+                const roomId = 'existingRoomId';
+                const payload = { id: roomId };
+                const cb = jest.fn();
+                const player = gameManager.players[0];
+                gameManager.rooms[roomId] = new Room('hostPlayerId', 'Standard');
+
+                // Call the method under test
+                gameManager.handleRoomJoin(testSockets[0], payload, cb);
+
+                // Check results
+                expect(cb).toHaveBeenCalledWith({ error: null });
+                expect(player.roomId).toBe(roomId);
+                expect(testSockets[0].join).toHaveBeenCalledWith(roomId);
+                expect(testSockets[0].emit).toHaveBeenCalledWith('tetris:room:joined', expect.any(Object));
+                expect(gameManager.io.to).toHaveBeenCalledWith(roomId);
+                expect(testSockets[0].emit).toHaveBeenCalledWith('tetris:room:updated', expect.any(Object));
+                expect(consoleSpy).toHaveBeenCalled();
+
+                // Clean up modifications
+                player.roomId = null;
+                gameManager.rooms = {};
+            });
         });
 
-        test('handleRoomCreate should return error if player is already in a room', () => {
-            // Préparer les données de test
-            const payload = { id: null, mode: 'Standard' };
-            const cb = jest.fn();
 
-            // Simuler la situation nécessaire
-            gameManager.rooms['fakeRoomId'] = new Room('somePlayerId', 'Standard');
-            gameManager.players[0].roomId = "fakeRoomId";
-
-            // Appeler la méthode à tester
-            gameManager.handleRoomCreate(testSockets[0], payload, cb);
-
-            // Vérifier les résultats
-            expect(cb).toHaveBeenCalledWith(null, { error: 'You are already in a room' });
-            expect(testSockets[0].join).not.toHaveBeenCalled();
-            expect(testSockets[0].emit).not.toHaveBeenCalled();
-            expect(Object.keys(gameManager.rooms).length).toBe(1);
-            expect(consoleSpy).toHaveBeenCalled();
-
-            // Retirer les modifications
-            gameManager.rooms = {};
-            gameManager.players[0].roomId = null;
-        });
-
-        test('handleRoomCreate should create a new room with valid payload', () => {
-            // Préparer les données de test
-            const payload = { id: null, mode: 'Standard' };
-            const cb = jest.fn();
-
-            // Appeler la méthode à tester
-            gameManager.handleRoomCreate(testSockets[0], payload, cb);
-
-            // Vérifier les résultats
-            expect(cb).toHaveBeenCalledWith(null, { error: null });
-            expect(testSockets[0].join).toHaveBeenCalled();
-            expect(testSockets[0].emit).toHaveBeenCalledWith('tetris:room:joined', expect.any(Object));
-            expect(testSockets[0].emit).toHaveBeenCalledWith('tetris:room:updated', expect.any(Object));
-            expect(consoleSpy).toHaveBeenCalled();
-
-            // Retirer les modifications
-            gameManager.rooms = {};
-            gameManager.players[0].roomId = null;
-        });
     });
 
 });

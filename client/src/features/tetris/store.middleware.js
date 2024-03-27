@@ -171,55 +171,25 @@ export const TetrisMiddleware = (store) => (next) => (action) =>
 
 	if ( TetrisActions.GameLeave.match(action) )
 	{
-		socket.emit('tetris:room:leave', (response) =>
-		{
-			const { error } = response;
+		socket.emit('tetris:room:leave');
 
-			if ( error )
-			{
-				// Todo: Notification ?
- 			}
-
-			return next(action);
-		});
-
-		return ;
+		return next(action);
 	}
 
 	if ( TetrisActions.GameStart.match(action) )
 	{
-		socket.emit('tetris:game:start', (response) =>
-		{
-			const { error } = response;
+		socket.emit('tetris:game:start');
 
-			if ( error )
-			{
-				// Todo: Notification ?
- 			}
-
-			return next(action);
-		});
-
-		return ;
+		return next(action);
 	}
 
 	if ( TetrisActions.GameKick.match(action) )
 	{
 		const { name } = action.payload;
 
-		socket.emit('tetris:room:kick', { name }, (response) =>
-		{
-			const { error } = response;
+		socket.emit('tetris:room:kick', { name });
 
-			if ( error )
-			{
-				// Todo: Notification ?
- 			}
-
-			return next(action);
-		});
-
-		return ;
+		return next(action);
 	}
 
 	if ( TetrisActions.GameAction.match(action) )

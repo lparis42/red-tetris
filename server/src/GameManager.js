@@ -21,12 +21,12 @@ class GameManager {
 
             socket.on('tetris:room:create', (payload, cb) => this.handleRoomCreate(socket, payload, cb));
             socket.on('tetris:room:join', (payload, cb) => this.handleRoomJoin(socket, payload, cb));
-            socket.on('tetris:room:leave', (cb) => this.handleRoomLeave(socket, cb));
-            socket.on('tetris:game:start', (cb) => this.handleRoomGameStart(socket, cb));
+            socket.on('tetris:room:leave', () => this.handleRoomLeave(socket));
+            socket.on('tetris:game:start', () => this.handleRoomGameStart(socket));
             socket.on('tetris:game:action', (payload) => this.handleRoomGameAction(socket, payload));
             socket.on('tetris:player:rename', (payload, cb) => this.handlePlayerRename(socket, payload, cb));
             socket.on('tetris:room:list', (payload, cb) => this.handleRoomList(socket, payload, cb));
-            socket.on('tetris:room:kick', (payload, cb) => this.handleRoomKick(socket, payload, cb));
+            socket.on('tetris:room:kick', (payload) => this.handleRoomKick(socket, payload));
 
             socket.on('disconnect', () => this.handleDisconnect(socket));
         });
@@ -126,9 +126,11 @@ class GameManager {
         if (this.checkCondition(!id, 'Room ID is required', socket, cb)) return;
         let room = this.rooms[id];
         if (room) {
+            if (player.roomId !== null){
+                this.handleRoomLeave(socket);
+            }
             if (this.checkCondition(room.players.length >= 9, 'Room is full', socket, cb)) return;
             if (this.checkCondition(room.start === true, 'Room is currently playing', socket, cb)) return;
-            if (this.checkCondition(player.roomId !== null, 'Player is already in a room', socket, cb)) return;
         } else {
             this.handleRoomCreate(socket, { id: id, mode: 'Standard' }, cb);
             return;
@@ -144,14 +146,14 @@ class GameManager {
         const leader = this.players.find(player => player.id === room.host);
         socket.emit('tetris:room:joined', { id: id, mode: room.mode, active: false, leader: leader.name });
         const playerNames = room.players.map(playerId => this.players.find(player => player.id === playerId).name);
-        this.io.to(id).emit('tetris:room:updated', { leader: leader.name, players: playerNames });
+        this.io.to(id).emit('tetris:room:updated', { leader: room.host, players: playerNames });
 
         console.log(`${socket.id} joined room ${id}`);
     }
 
-    handleRoomLeave(socket, cb) {
+    handleRoomLeave(socket) {
         // Invalid
-        if (!socket || typeof cb !== 'function') return;
+        if (!socket) return;
         const player = this.players.find(player => player.id === socket.id);
         if (!player) return;
         if (!player.roomId) return;
@@ -168,7 +170,6 @@ class GameManager {
         }
 
         // Client update
-        cb({ error: null });
         socket.emit('tetris:room:leave');
         const leader = this.players.find(player => player.id === room.host);
         const playerNames = room.players.map(playerId => this.players.find(player => player.id === playerId).name);
@@ -357,10 +358,10 @@ class GameManager {
         });
     };
 
-    handleRoomGameStart(socket, cb) {
+    handleRoomGameStart(socket) {
 
         // Invalid
-        if (!socket || typeof cb !== 'function') return;
+        if (!socket) return;
         const player = this.players.find(player => player.id === socket.id);
         if (!player) return;
         if (!player.roomId) return;
@@ -369,9 +370,7 @@ class GameManager {
         if (room.start) return;
         const index = room.players.indexOf(player.id);
         if (index === -1) return;
-
-        // Error
-        if (this.checkCondition(player.id !== room.host, `You are not the host`, socket, cb)) return;
+        if (player.id !== room.host) return;
 
         // Server update
         room.pieces = [];
@@ -424,7 +423,6 @@ class GameManager {
         const leader = this.players.find(player => player.id === room.host);
         this.io.to(player.roomId).emit('tetris:room:updated', { leader: leader.name });
         this.io.to(player.roomId).emit("tetris:game:started");
-        cb({ error: null });
 
         console.log(`Game started in room ${player.roomId}`);
     }
@@ -566,10 +564,10 @@ class GameManager {
         console.log(`Room list sent to ${socket.id}`);
     }
 
-    handleRoomKick(socket, payload, cb) {
+    handleRoomKick(socket, payload) {
 
         // Invalid
-        if (!socket || !payload || typeof cb !== 'function') return;
+        if (!socket || !payload) return;
         const { name } = payload;
         if (!name) return;
         const player = this.players.find(player => player.id === socket.id);
@@ -580,9 +578,7 @@ class GameManager {
         if (!playerToKick) return;
         const playerIndex = room.players.indexOf(playerToKick.id);
         if (playerIndex === -1) return;
-
-        // Error
-        if (this.checkCondition(player.id !== room.host, `You are not the host of room ${player.roomId}`, socket, cb)) return;
+        if (player.id !== room.host) return;
 
         // Server update
         if (playerToKick.id === room.host) {

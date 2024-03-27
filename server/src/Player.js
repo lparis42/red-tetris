@@ -29,7 +29,7 @@ class Player {
         };
     }
 
-    isPieceCanMove(COLS) {
+    isPieceCanMove(COLS = 10) {
         // Logique pour vérifier le déplacement de la pièce
         for (let r = 0; r < this.currentPiece.shape.length; r++) {
             for (let c = 0; c < this.currentPiece.shape[r].length; c++) {
@@ -75,7 +75,7 @@ class Player {
         });
     }
 
-    removeCompletedLines(COLS) {
+    removeCompletedLines(COLS = 10) {
         // Logique supprimer les lignes complètes
         let completedLines = 0;
         for (let row = 0; row < this.grid.length; row++) {
@@ -95,7 +95,7 @@ class Player {
         return completedLines;
     }
 
-    calculateSpectrum(COLS) {
+    calculateSpectrum(COLS = 10) {
         const spectrum = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     
         // Pour chaque colonne, trouver la première ligne occupée par une pièce
@@ -129,7 +129,7 @@ class Player {
         this.resetInterval.clear();
     }
 
-    isGameEnd(COLS) {
+    isGameEnd(COLS = 10) {
         for (let col = 0; col < COLS; col++) {
             if (this.grid[0][col] !== 0) {
                 return true;
