@@ -77,7 +77,9 @@ class GameManager {
     handleRoomCreate(socket, payload, cb) {
 
         // Invalid
-        if (!socket || !payload || typeof cb !== 'function') return;
+        if (typeof socket !== 'object') return;
+        if (typeof payload !== 'object' || Object.keys(payload).length === 0) return;
+        if (typeof cb !== 'function') return;
         const { id, mode } = payload;
         const player = this.players.find(player => player.id === socket.id);
         if (!player) return;
@@ -117,7 +119,9 @@ class GameManager {
     handleRoomJoin(socket, payload, cb) {
 
         // Invalid
-        if (!socket || !payload || typeof cb !== 'function') return;
+        if (typeof socket !== 'object') return;
+        if (typeof payload !== 'object' || Object.keys(payload).length === 0) return;
+        if (typeof cb !== 'function') return;
         const player = this.players.find(player => player.id === socket.id);
         if (!player) return;
 
@@ -126,7 +130,7 @@ class GameManager {
         if (this.checkCondition(!id, 'Room ID is required', socket, cb)) return;
         let room = this.rooms[id];
         if (room) {
-            if (player.roomId !== null){
+            if (player.roomId !== null) {
                 this.handleRoomLeave(socket);
             }
             if (this.checkCondition(room.players.length >= 9, 'Room is full', socket, cb)) return;
@@ -153,7 +157,7 @@ class GameManager {
 
     handleRoomLeave(socket) {
         // Invalid
-        if (!socket) return;
+        if (typeof socket !== 'object') return;   
         const player = this.players.find(player => player.id === socket.id);
         if (!player) return;
         if (!player.roomId) return;
@@ -361,7 +365,7 @@ class GameManager {
     handleRoomGameStart(socket) {
 
         // Invalid
-        if (!socket) return;
+        if (typeof socket !== 'object') return;
         const player = this.players.find(player => player.id === socket.id);
         if (!player) return;
         if (!player.roomId) return;
@@ -430,7 +434,8 @@ class GameManager {
     handleRoomGameAction(socket, payload) {
 
         // Invalid
-        if (!socket || !payload) return;
+        if (typeof socket !== 'object') return;
+        if (typeof payload !== 'object' || Object.keys(payload).length === 0) return;
         const { action } = payload;
         if (!['move-left', 'move-right', 'move-down', 'move-space', 'rotate-left', 'rotate-right', 'hold'].includes(action)) return;
         const player = this.players.find(player => player.id === socket.id && player.roomId);
@@ -526,7 +531,9 @@ class GameManager {
     handlePlayerRename(socket, payload, cb) {
 
         // Invalid
-        if (!socket || !payload || typeof cb !== 'function') return;
+        if (typeof socket !== 'object') return;
+        if (typeof payload !== 'object' || Object.keys(payload).length === 0) return;
+        if (typeof cb !== 'function') return;
         const { name } = payload;
         const player = this.players.find(player => player.id === socket.id);
         if (!player) return;
@@ -549,7 +556,9 @@ class GameManager {
     handleRoomList(socket, payload, cb) {
 
         // Invalid
-        if (!socket || !payload || typeof cb !== 'function') return;
+        if (typeof socket !== 'object') return;
+        if (typeof payload !== 'object' || Object.keys(payload).length === 0) return;
+        if (typeof cb !== 'function') return;
 
         // Client Update 
         const { id } = payload;
@@ -567,7 +576,8 @@ class GameManager {
     handleRoomKick(socket, payload) {
 
         // Invalid
-        if (!socket || !payload) return;
+        if (typeof socket !== 'object') return;
+        if (typeof payload !== 'object' || Object.keys(payload).length === 0) return;
         const { name } = payload;
         if (!name) return;
         const player = this.players.find(player => player.id === socket.id);
@@ -597,7 +607,9 @@ class GameManager {
     }
 
     handleDisconnect(socket) {
+
         // Invalid
+        if (!socket || typeof socket !== 'object') return;
         const player = this.players.find(player => player.id === socket.id);
         if (!player) return;
 
