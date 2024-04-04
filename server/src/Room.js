@@ -1,13 +1,13 @@
 // Room.js
 
 class Room {
-    constructor(host, mode) {
-        this.host = host;
-        this.players = [host];
+    constructor(leader, mode) {
+        this.leader = leader;
+        this.players = [leader];
         this.pieces = [];
         this.positions = [];
         this.mode = mode;
-        this.start = false;
+        this.active = false;
         this.cols = 10;
     }
 
