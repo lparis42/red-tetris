@@ -1,8 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 // State -----------------------------------------------------------------------
-const initialState =
+export const SocketInitialState =
 {
+	isConnecting: false,
 	isConnected: false,
 };
 
@@ -10,23 +11,25 @@ const initialState =
 const slice = createSlice(
 {
 	name: 'socket',
-	initialState,
+	initialState: SocketInitialState,
 	reducers:
 	{
-		connect: () =>
+		connect: (state) =>
 		{
-			return ;
+			state.isConnecting = true;
 		},
 		connected: (state) =>
 		{
+			state.isConnecting = false;
 			state.isConnected = true;
 		},
-		disconnect: () =>
+		disconnect: (state) =>
 		{
-			return ;
+			state.isConnecting = false;
 		},
 		disconnected: (state) =>
 		{
+			state.isConnecting = false;
 			state.isConnected = false;
 		},
 	},

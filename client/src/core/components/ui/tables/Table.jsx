@@ -21,10 +21,7 @@ export default function Table(
 					</tr>
 				}
 			</ConditionalWrapper>
-			<ConditionalWrapper
-				condition={ header }
-				wrapper={ (children) => <tbody>{ children }</tbody> }
-			>
+			<tbody>
 				{ rows.map(({ key: rkey, cells }) =>
 					<tr key={ rkey } className={ `b-solid b-0 bb-md b-dark` }>
 						{
@@ -34,7 +31,7 @@ export default function Table(
 						}
 					</tr>
 				)}
-			</ConditionalWrapper>
+			</tbody>
 		</table>
 	);
 }

@@ -6,16 +6,18 @@ import { useCallback } from 'react';
 export const useSocket = () =>
 {
 	const dispatch = useDispatch();
-	const store = useSelector(SocketStore);
 
 	// Variable -----------------------
-	const socket = store;
+	const socket = useSelector(SocketStore);
 
 	// Callback -----------------------
 	const connect = useCallback(() =>
 	{
-		dispatch(SocketActions.connect());
-	}, [ dispatch ]);
+		if ( ! socket.isConnecting )
+		{
+			dispatch(SocketActions.connect());
+		}
+	}, [ socket.isConnecting, dispatch ]);
 
 	const disconnect = useCallback(() =>
 	{

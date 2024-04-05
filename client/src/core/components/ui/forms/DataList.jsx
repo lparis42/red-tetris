@@ -5,7 +5,7 @@ export default function DataList(
 )
 {
 	return (
-		<datalist { ...attrs } >
+		<datalist { ...attrs }>
 			{ options.map(({ value, label }) =>
 				<option key={ value } value={ value }>{ label }</option>
 			)}

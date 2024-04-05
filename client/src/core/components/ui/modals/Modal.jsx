@@ -1,7 +1,7 @@
 
 // Component -------------------------------------------------------------------
 export default function Modal(
-	{ show, full, children }
+	{ show, full, children, ...attrs }
 )
 {
 	if ( ! show )
@@ -10,7 +10,7 @@ export default function Modal(
 	}
 
 	return (
-		<div className={ `grid place-items-center bg-modal z-modal ${ ( full ) ? 'fixed inset-0' : '' }` }>
+		<div { ...attrs } className={ `grid place-items-center bg-modal z-modal ${ ( full ) ? 'fixed inset-0' : '' }` }>
 			<div className={ `p-lg b-solid b-md b-dark bg-darkest` }>
 				{ children }
 			</div>

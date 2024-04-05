@@ -68,7 +68,7 @@ export const TetrisMiddleware = (store) => (next) => (action) =>
 			store.dispatch(TetrisActions.GameEnded({ name }));
 		});
 
-		socket.on('tetris:game:winner', ({ name, score }) =>
+		socket.on('tetris:game:winner', ({ scoreData: { name, score } } ) =>
 		{
 			store.dispatch(TetrisActions.GameWinner({ winner: { name, score } }));
 		});
@@ -91,9 +91,7 @@ export const TetrisMiddleware = (store) => (next) => (action) =>
 
 	if ( TetrisActions.PlayerRename.match(action) )
 	{
-		const { name } = action.payload;
-
-		socket.emit('tetris:player:rename', { name }, (response) =>
+		socket.emit('tetris:player:rename', action.payload, (response) =>
 		{
 			const { name, error } = response;
 
@@ -112,9 +110,7 @@ export const TetrisMiddleware = (store) => (next) => (action) =>
 
 	if ( TetrisActions.GameList.match(action) )
 	{
-		const { id } = action.payload;
-
-		socket.emit('tetris:room:list', { id }, (response) =>
+		socket.emit('tetris:room:list', action.payload, (response) =>
 		{
 			const { rooms } = response;
 
@@ -133,9 +129,7 @@ export const TetrisMiddleware = (store) => (next) => (action) =>
 
 	if ( TetrisActions.GameCreate.match(action) )
 	{
-		const { id, mode } = action.payload;
-
-		socket.emit('tetris:room:create', { id, mode }, (response) =>
+		socket.emit('tetris:room:create', action.payload, (response) =>
 		{
 			const { error } = response;
 
@@ -152,9 +146,7 @@ export const TetrisMiddleware = (store) => (next) => (action) =>
 
 	if ( TetrisActions.GameJoin.match(action) )
 	{
-		const { id } = action.payload;
-
-		socket.emit('tetris:room:join', { id }, (response) =>
+		socket.emit('tetris:room:join', action.payload, (response) =>
 		{
 			const { error } = response;
 

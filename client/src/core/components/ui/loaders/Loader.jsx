@@ -1,11 +1,11 @@
 
 // Component -------------------------------------------------------------------
 export default function Loader(
-	{ size, children }
+	{ children, ...attrs }
 )
 {
 	return (
-		<div className={ `grid place-items-center ${( size === 'small' ) ? 'text-sm' : '' }` }>
+		<div { ...attrs } className={ `grid place-items-center` }>
 			{ children }
 		</div>
 	);

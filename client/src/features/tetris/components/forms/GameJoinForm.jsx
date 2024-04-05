@@ -10,7 +10,7 @@ import { useGame } from '../../hooks/useGame';
 
 // Component -------------------------------------------------------------------
 export default function GameJoinForm(
-	{ initialValue }
+	{ initialValue = '' }
 )
 {
 	const { suggestions, errors, list, join, clear, validateIdFormat } = useGame();

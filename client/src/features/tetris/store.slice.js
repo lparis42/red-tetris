@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 // State -----------------------------------------------------------------------
-const initialState =
+export const TetrisInitialState =
 {
 	errors: {
 		rename: null,
@@ -79,7 +79,7 @@ const initialState =
 const slice = createSlice(
 {
 	name: 'tetris',
-	initialState,
+	initialState: TetrisInitialState,
 	reducers:
 	{
 		Enable: () =>
@@ -92,7 +92,7 @@ const slice = createSlice(
 		},
 		ErrorsClear: (state) =>
 		{
-			state.errors = initialState.errors;
+			state.errors = TetrisInitialState.errors;
 		},
 		PlayerRename: (state, { payload }) =>
 		{
@@ -187,7 +187,7 @@ const slice = createSlice(
 		},
 		GameLeave: (state) =>
 		{
-			state.game = initialState.game;
+			state.game = TetrisInitialState.game;
 		},
 		GameStart: () =>
 		{
@@ -196,7 +196,7 @@ const slice = createSlice(
 		GameStarted: (state) =>
 		{
 			state.game.players.forEach(player => player.isAlive = true);
-			state.game.winner.name = initialState.game.winner.name;
+			state.game.winner.name = TetrisInitialState.game.winner.name;
 			state.game.isActive = true;
 		},
 		GameEnd: (state) =>
@@ -253,18 +253,6 @@ const slice = createSlice(
 			if ( ! player )
 			{
 				return ;
-			}
-
-			if ( ! player.piece )
-			{
-				player.piece = {
-					current: {
-						position: null,
-						content: null,
-					},
-					next: null,
-					hold: null,
-				};
 			}
 
 			if ( current )

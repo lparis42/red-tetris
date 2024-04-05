@@ -9,7 +9,7 @@ import { usePlayer } from '../../hooks/usePlayer';
 
 // Component -------------------------------------------------------------------
 export default function PlayerRenameForm(
-	{ initialValue }
+	{ initialValue = '' }
 )
 {
 	const { errors, rename, clear, validateNameFormat } = usePlayer();

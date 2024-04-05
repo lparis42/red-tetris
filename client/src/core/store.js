@@ -1,20 +1,35 @@
+import Merge from 'deepmerge';
 import { configureStore } from '@reduxjs/toolkit';
-import { SocketReducers } from '../features/socket/store.slice';
+import { SocketInitialState, SocketReducers } from '../features/socket/store.slice';
 import { SocketMiddleware } from '../features/socket/store.middleware';
-import { TetrisReducers } from '../features/tetris/store.slice';
+import { TetrisInitialState, TetrisReducers } from '../features/tetris/store.slice';
 import { TetrisMiddleware } from '../features/tetris/store.middleware';
 
-// Store -----------------------------------------------------------------------
-export const store = configureStore(
+// State -----------------------------------------------------------------------
+const state =
 {
-	reducer:
+	'socket': SocketInitialState,
+	'tetris': TetrisInitialState,
+};
+
+// Utils -----------------------------------------------------------------------
+export const setupStore = (preloadedState = undefined) =>
+{
+	return configureStore(
 	{
-		'socket': SocketReducers,
-		'tetris': TetrisReducers,
-	},
-	middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(
-	[
-		SocketMiddleware,
-		TetrisMiddleware,
-	]),
-});
+		preloadedState: (preloadedState) ? Merge(state, preloadedState) : undefined,
+		reducer:
+		{
+			'socket': SocketReducers,
+			'tetris': TetrisReducers,
+		},
+		middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(
+		[
+			SocketMiddleware,
+			TetrisMiddleware,
+		]),
+	});
+};
+
+// Store -----------------------------------------------------------------------
+export const store = setupStore();

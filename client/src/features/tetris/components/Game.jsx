@@ -58,17 +58,19 @@ export default function Game()
 
 		document.addEventListener('keydown', onKeyDown);
 
-		return () => document.removeEventListener('keydown', onKeyDown);
+		return () => {
+			document.removeEventListener('keydown', onKeyDown);
+		};
 	}, [ action ]);
 
-	const [ rows = 1, cols = 1 ] = [
+	const [ rows, cols ] = [
 		[1, 1], [1, 1], [2, 1], [2, 2],
 		[2, 2], [3, 2], [3, 2], [3, 3]
 	][(game.players.length / 2) | 0];
 
 	return (
 		<div className={`tetris-game grid gap-md`}>
-			<Modal show={ game.players.filter(p => p.isAlive !== null).length === 1 && ! game.players[0].isAlive } full>
+			<Modal show={ ! game.winner.name && game.players.filter(p => p.isAlive !== null).length === 1 && ! game.players[0].isAlive } full>
 				<div className={ `w-20 flex flex-col gap-md text-center` }>
 					You scored
 					<span className={ `text-xl text-red` }>
