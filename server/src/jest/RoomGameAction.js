@@ -26,6 +26,7 @@ const runRoomGameActionTests = () => {
         afterEach(() => {
             // Reset player data
             server.gameManager.players.forEach(player => {
+                player.resetInterval.clear();
                 Object.assign(player, new Player(player.id, player.name));
             });
 

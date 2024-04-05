@@ -16,10 +16,23 @@ const runRoomGameStartTests = () => {
             done();
         });
 
+        afterEach(() => {
+            // Reset player data
+            server.gameManager.players.forEach(player => {
+                player.resetInterval.clear();
+                Object.assign(player, new Player(player.id, player.name));
+            });
+
+            // Clear room data
+            server.gameManager.rooms = {};
+
+            // Clear all mocks
+            jest.clearAllMocks();
+        });
+
         afterAll((done) => {
             server.closeServer(done);
         });
-
         test('should return early if socket is not provided', () => {
             // Setup
             const mockSocket = null;
