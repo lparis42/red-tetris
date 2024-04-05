@@ -10,6 +10,7 @@ const runRoomCreateTests = require('./RoomCreate.js');
 const runRoomJoinTests = require('./RoomJoin.js');
 const runRoomLeaveTests = require('./RoomLeave.js');
 const runRoomKickTests = require('./RoomKick.js');
+const runRoomGameStartTests = require('./RoomGameStart.js');
 
 
 const runRoomListTests = require('./RoomList.js');
@@ -48,7 +49,8 @@ describe('server', () => {
         runRoomJoinTests();
         runRoomLeaveTests();
         runRoomKickTests();
-
+        runRoomGameStartTests();
+        
         runRoomListTests();
     });
 });
