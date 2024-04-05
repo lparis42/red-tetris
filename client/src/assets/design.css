@@ -92,7 +92,7 @@ body
 	margin: 0;
 	color: var(--color-lightest);
 	font-size: var(--font-size-base);
-	font-family: 'Roboto', 'Open Sans', Impact, sans-serif;
+	font-family: 'Roboto', 'Open Sans', system-ui, sans-serif;
 	background: var(--color-darkest);
 }
 
