@@ -81,9 +81,12 @@ class GameManager {
         if (!payload || typeof payload !== 'object' || Object.keys(payload).length === 0) return;
         if (typeof cb !== 'function') return;
         const { id, mode } = payload;
-        const player = this.players.find(player => player.id === socket.id);
+        const player = this.players.find(p => p.id === socket.id);
         if (!player) return;
         if (player.roomId !== null) return;
+
+        if (!player.name || !/^[\w]{3,16}$/.test(player.name) || this.players.some(p => p.id !== player.id && p.name === player.name)) return;
+
         if (mode !== 'Easy' && mode !== 'Standard' && mode !== 'Expert') return;
 
         // Error
@@ -124,6 +127,8 @@ class GameManager {
         if (typeof cb !== 'function') return;
         const player = this.players.find(player => player.id === socket.id);
         if (!player) return;
+
+        if (!player.name || !/^[\w]{3,16}$/.test(player.name) || this.players.some(p => p.id !== player.id && p.name === player.name)) return;
 
         // Error
         const { id } = payload;
@@ -225,6 +230,7 @@ class GameManager {
                 }, timer);
             }
             player.hold = 2;
+            player.lock = false;
         } else {
 
             player.addPenalty();
@@ -505,6 +511,7 @@ class GameManager {
             case 'hold':
                 if (player.hold === 0) {
                     player.hold = 1;
+                    player.lock = true;
                 }
                 break;
             default:
