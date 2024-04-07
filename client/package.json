@@ -41,5 +41,13 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "jest": {
+    "coveragePathIgnorePatterns": [
+      "__tests__/utilities/"
+    ],
+    "watchPathIgnorePatterns": [
+      "__tests__/utilities/"
+    ]
   }
 }
