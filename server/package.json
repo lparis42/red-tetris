@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "main": "src/Index.js",
   "scripts": {
+    "start": "nodemon src/Index.js",
     "test": "jest",
-    "start": "nodemon src/Index.js"
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watchAll"
   },
   "keywords": [],
   "author": "",
